@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="ProjetoSegC-Fase2">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/Tintolmarket.jar!/" />
+      <root url="jar://$PROJECT_DIR$/TintolmarketServer.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
