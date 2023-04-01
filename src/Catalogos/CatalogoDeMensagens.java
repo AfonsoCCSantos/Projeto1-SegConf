@@ -1,3 +1,5 @@
+package Catalogos;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -10,6 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import Models.Message;
+
 /**
  * 
  * @author Afonso Santos - FC56368
@@ -17,7 +21,7 @@ import java.util.Map;
  * @author Raquel Domingos - FC56378
  *
  */
-public class CatalogoDeMensagens extends Catalogo{
+public class CatalogoDeMensagens extends Catalogo {
 	private static CatalogoDeMensagens INSTANCE = null;
 	private static final String MSGS_FILE = "serverFiles/messages.txt";
 	private File messagesFile;
@@ -74,7 +78,7 @@ public class CatalogoDeMensagens extends Catalogo{
 		StringBuilder targetLine = new StringBuilder(user + "-");
 		List<Message> messagesToRead = messages.get(user);
 		for (Message m: messagesToRead) {
-			sb.append("Message from: " + m.getSender() + "\nContent: " + m.getText() + "\n\n");
+			sb.append("Models.Message from: " + m.getSender() + "\nContent: " + m.getText() + "\n\n");
 			targetLine.append(m.getSender() + ":" + m.getText() + ";");
 		}
 		changeLine(targetLine.deleteCharAt(targetLine.length()-1).toString(), null, this.messagesFile);

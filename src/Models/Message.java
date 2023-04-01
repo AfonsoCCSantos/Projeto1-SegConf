@@ -1,3 +1,5 @@
+package Models;
+
 /**
  * 
  * @author Afonso Santos - FC56368

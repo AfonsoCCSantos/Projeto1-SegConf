@@ -1,4 +1,4 @@
-Para compilar o jar do servidor: jar cvfm TintolmarketServer.jar manifestTintolmarketServer.txt TintolmarketServer.class ServerThread.class TintolSkel.class Catalogo.class CatalogoDeMensagens.class CatalogoDeSaldos.class CatalogoDeUtilizadores.class CatalogoDeVinhos.class CatalogoVendas.class Message.class Utils.class ValidationLib.class Wine.class WineSell.class
+Para compilar o jar do servidor: jar cvfm TintolmarketServer.jar manifestTintolmarketServer.txt TintolmarketServer.class ServerThread.class TintolSkel.class Catalogos.Catalogo.class Catalogos.CatalogoDeMensagens.class Catalogos.CatalogoDeSaldos.class Catalogos.CatalogoDeUtilizadores.class Catalogos.CatalogoDeVinhos.class Catalogos.CatalogoVendas.class Models.Message.class Utils.class ValidationLib.class Models.Wine.class Models.WineSell.class
 						  
 Para compilar o jar do cliente: jar cvfm Tintolmarket.jar manifestTintolmarket.txt Tintolmarket.class TintolStub.class Utils.class ValidationLib.class						  
 
@@ -17,7 +17,7 @@ Para executar o cliente: java -jar Tintolmarket.jar localhost:portoDoServidor(op
 Para terminar ambos os programas basta fazer CTRL C 		
 	
 	
-Os ficheiros no servidor são guardados da seguinte forma:
+Os ficheiros no servidor sï¿½o guardados da seguinte forma:
 	-Se a mesma nao existe, eh criada uma pasta chamada "serverFiles", dentro desta eh criada uma pasta "images".
 	-Dentro de "serverFiles/images" serao guardadas as imagens enviadas pelos clientes aquando da sua operacao "addWine"
 	-Essas imagens serao guardadas com o nome "nomeDoVinho_server.extensao"
@@ -33,11 +33,11 @@ Os ficheiros no servidor são guardados da seguinte forma:
     A soma de todas as classificacoes e o numero de classificacoes recebidas sao usadas para calcular a classificacao media do vinho.
     Cada linha representa um vinho e as linhas do ficheiro teem o seguinte formato:
     	nomDoVinho:pathDaImagem:somaClassificacoes:numeroDeClassificacoes:unidadesDoVinho
-    -Em "users.txt são guardados os utilizadores registados no servidor. Cada linha  representa um utilizador registado,
+    -Em "users.txt sï¿½o guardados os utilizadores registados no servidor. Cada linha  representa um utilizador registado,
      indicando o nome e a password. As linhas teem o seguinte formato:
      	utilizador:password
-     -Em "budgets.txt" são guardados os saldos dos utilizadores registados. Cada linha representa um utilizador registado
-      e o seu saldo atual. O formato das linhas é:
+     -Em "budgets.txt" sï¿½o guardados os saldos dos utilizadores registados. Cada linha representa um utilizador registado
+      e o seu saldo atual. O formato das linhas ï¿½:
       	utilizador:dinheiroDisponivel
      	
 As imagens enviadas para o cliente aquando da operacao "view" sao guardadas da seguinte forma:     

@@ -1,3 +1,5 @@
+import Catalogos.*;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -148,7 +150,7 @@ public class TintolSkel {
     }
     
     public void view(String wine) {
-        String wineInfo = "Wine information:\n"; 
+        String wineInfo = "Models.Wine information:\n";
         File f = null;
         synchronized (this.catWines) {
 	        if (!this.catWines.wineExists(wine)) {
@@ -240,7 +242,8 @@ public class TintolSkel {
     	synchronized(this.catSaldos) {
             if (this.catSaldos.userHasMoney(user,winePrice)) {
 	    	//4.1. Tirar da conta do user que compra - Se nao tiver dinheiro suficiente, avisar
-				this.catSaldos.updateMoney(user,-winePrice);    		//4.2. Por o dinheiro na conta do user que vende
+				this.catSaldos.updateMoney(user,-winePrice);
+    		//4.2. Por o dinheiro na conta do user que vende
 				this.catSaldos.updateMoney(seller,winePrice);
             }
             else {
@@ -255,7 +258,8 @@ public class TintolSkel {
         
         //5. tirar a sell ou a quantidade de vinho comparada da sell
         synchronized(this.catVendas){
-            this.catVendas.removeQuantityFromSell(wine,seller,quantity);        }
+            this.catVendas.removeQuantityFromSell(wine,seller,quantity);
+        }
             	
 		//6. tirar a quantidade de vinho
     	synchronized (this.catWines) {
@@ -311,7 +315,7 @@ public class TintolSkel {
     	}
     	
    		try {
-			out.writeObject("Message sent successfully.");
+			out.writeObject("Models.Message sent successfully.");
 			return;
 		} catch (IOException e) {
 			e.printStackTrace();

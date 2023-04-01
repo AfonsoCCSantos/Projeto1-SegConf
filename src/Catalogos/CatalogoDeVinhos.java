@@ -1,3 +1,7 @@
+package Catalogos;
+
+import Models.Wine;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -19,7 +23,7 @@ public class CatalogoDeVinhos extends Catalogo {
 	private static CatalogoDeVinhos INSTANCE = null;
 	private static final String WINE_FILE = "serverFiles/wines.txt";
 	private static File wines;
-	private Map<String,Wine> winesMap;
+	private Map<String, Wine> winesMap;
 	
 	private CatalogoDeVinhos() {
 		wines = new File(WINE_FILE);
