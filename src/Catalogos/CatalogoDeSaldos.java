@@ -16,26 +16,26 @@ public class CatalogoDeSaldos extends Catalogo {
 	private static final String BUDGETS_FILE = "serverFiles/budgets.txt";
 	private File budgets;
 	private Map<String, Double> usersBudget;
-	
+
 	private CatalogoDeSaldos() {
 		budgets = new File(BUDGETS_FILE);
 		usersBudget = new HashMap<>();
-	
+
 		try {
 			budgets.createNewFile();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public boolean userExists(String user) {
 		return usersBudget.containsKey(user);
 	}
-	
+
 	public void registerUser(String user) {
 		String budgetRow = null;
-		
-		try {	
+
+		try {
 			BufferedWriter writer = null;
 			writer = new BufferedWriter(new FileWriter(budgets, true));
 			budgetRow = user + SEPARATOR + STARTING_BUDGET;
@@ -56,7 +56,7 @@ public class CatalogoDeSaldos extends Catalogo {
 	}
 
 	public boolean userHasMoney(String user, double value) {
-		return usersBudget.get(user) >= value;	
+		return usersBudget.get(user) >= value;
 	}
 
 	public void updateMoney(String user, double value) {
@@ -67,7 +67,7 @@ public class CatalogoDeSaldos extends Catalogo {
 		changeLine(target, replacement, budgets);
 
 		usersBudget.put(user, newValue);
-	} 
+	}
 
 	//@requires users exist
 	public double getUserMoney(String user) {

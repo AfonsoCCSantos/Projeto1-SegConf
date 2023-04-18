@@ -15,7 +15,7 @@ import java.util.Map;
 import Models.Message;
 
 /**
- * 
+ *
  * @author Afonso Santos - FC56368
  * @author Alexandre Figueiredo - FC57099
  * @author Raquel Domingos - FC56378
@@ -26,7 +26,7 @@ public class CatalogoDeMensagens extends Catalogo {
 	private static final String MSGS_FILE = "serverFiles/messages.txt";
 	private File messagesFile;
 	private Map<String, List<Message>> messages;
-		
+
 	private CatalogoDeMensagens() {
 		messagesFile = new File(MSGS_FILE);
 		try {
@@ -34,19 +34,19 @@ public class CatalogoDeMensagens extends Catalogo {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		messages = new HashMap<>(); 
+		messages = new HashMap<>();
 	}
-	
+
 	public static CatalogoDeMensagens getInstance() {
 		if (INSTANCE == null) {
 			INSTANCE = new CatalogoDeMensagens();
 		}
 		return INSTANCE;
 	}
-	
+
 	public void registerMessage(String toUser, String fromUser, String message) {
 		Message msg = new Message(fromUser,message);
-		
+
 		if (messages.containsKey(toUser)) {
 			List<Message> userMessages = this.messages.get(toUser);
 			StringBuilder targetLine = new StringBuilder(toUser + "-");
@@ -61,7 +61,7 @@ public class CatalogoDeMensagens extends Catalogo {
 			List<Message> msgs = new ArrayList<>();
 			msgs.add(msg);
 			this.messages.put(toUser, msgs);
-			
+
 			try (BufferedWriter writer = new BufferedWriter(new FileWriter(this.messagesFile,true))) {
 				writer.append(toUser + "-" + fromUser + ":" + message + "\n");
 			} catch (IOException e) {
@@ -69,7 +69,7 @@ public class CatalogoDeMensagens extends Catalogo {
 			}
 		}
 	}
-	
+
 	public String readMessages(String user) {
 		if (!messages.containsKey(user)) {
 			return "0 new messages.";
@@ -91,7 +91,7 @@ public class CatalogoDeMensagens extends Catalogo {
 		try (BufferedReader reader = new BufferedReader(new FileReader(messagesFile))) {
 			String line = reader.readLine();
 			String[] tokens = null;
-			
+
 			while (line != null) {
 				tokens = line.split("-");
 				String[] userMessages = tokens[1].split(";");

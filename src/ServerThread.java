@@ -1,26 +1,29 @@
+import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.net.Socket;
 
 
 /**
- * 
+ *
  * @author Afonso Santos - FC56368
  * @author Alexandre Figueiredo - FC57099
  * @author Raquel Domingos - FC56378
  *
  */
 public class ServerThread extends Thread {
-	
+
     private Socket socket = null;
-    
-    
-    public ServerThread(Socket inSocket) {
+	private SecretKey passwordKey = null;
+
+
+    public ServerThread(Socket inSocket, SecretKey passwordKey) {
         socket = inSocket;
+		this.passwordKey = passwordKey;
     }
-    
+
     public void run() {
-        TintolSkel skel = new TintolSkel(socket);
-        
+        TintolSkel skel = new TintolSkel(socket, passwordKey);
+
         String user = skel.loginUser();
         if (user == null) {
         	try {
@@ -28,9 +31,9 @@ public class ServerThread extends Thread {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-        	System.exit(-1);
+        	return;
         }
-        
+
         //The client application will now print the menu
         String command = null;
         	while (true) {
@@ -51,13 +54,13 @@ public class ServerThread extends Thread {
         			break;
         		case "sell":
         		case "s":
-        			if (tokens.length != 4 || !ValidationLib.verifyString(tokens[1]) || 
+        			if (tokens.length != 4 || !ValidationLib.verifyString(tokens[1]) ||
         				!ValidationLib.isValidNumber(tokens[2]) || !ValidationLib.isIntegerNumber(tokens[3])) {
         				closeConnection();
             			return;
         			}
         			skel.sellWine(user, tokens[1], tokens[2], tokens[3]);
-        			break;    
+        			break;
         		case "view":
         		case "v":
         			if (tokens.length != 2 || !ValidationLib.verifyString(tokens[1])) {
@@ -68,7 +71,7 @@ public class ServerThread extends Thread {
         			break;
         		case "buy":
         		case "b":
-        			if (tokens.length != 4 || !ValidationLib.verifyString(tokens[1]) 
+        			if (tokens.length != 4 || !ValidationLib.verifyString(tokens[1])
         								   || !ValidationLib.isIntegerNumber(tokens[3])) {
         				closeConnection();
             			return;
@@ -81,7 +84,7 @@ public class ServerThread extends Thread {
         			break;
         		case "classify":
         		case "c":
-        			if (tokens.length != 3 || !ValidationLib.verifyString(tokens[1]) 
+        			if (tokens.length != 3 || !ValidationLib.verifyString(tokens[1])
 							   			   || !ValidationLib.isIntegerNumber(tokens[2])) {
         				closeConnection();
             			return;
@@ -104,7 +107,7 @@ public class ServerThread extends Thread {
         		case "read":
         		case "r":
              		skel.read(user);
-        			break;			
+        			break;
         		default:
         			closeConnection();
         			return;
@@ -112,7 +115,7 @@ public class ServerThread extends Thread {
         	}
 
     }
-    
+
     private void closeConnection() {
     	try {
 			socket.close();
@@ -121,5 +124,5 @@ public class ServerThread extends Thread {
 		}
 		this.interrupt();
     }
-    
+
 }

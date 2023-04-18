@@ -14,19 +14,19 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 
+ *
  * @author Afonso Santos - FC56368
  * @author Alexandre Figueiredo - FC57099
  * @author Raquel Domingos - FC56378
  *
  */
 public class CatalogoVendas extends Catalogo {
-	
+
 	private static CatalogoVendas INSTANCE = null;
 	private static final String SELLS_FILE = "serverFiles/sells.txt";
 	private File sells;
 	private Map<String,List<WineSell>> sellsMap;
-	
+
 	private CatalogoVendas() {
 		sells = new File(SELLS_FILE);
 		try {
@@ -34,18 +34,18 @@ public class CatalogoVendas extends Catalogo {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		sellsMap = new HashMap<>();
 	}
-		
-	
+
+
 	public static CatalogoVendas getInstance() {
 		if (INSTANCE == null) {
 			INSTANCE = new CatalogoVendas();
 		}
 		return INSTANCE;
 	}
-	
+
 	/*
 	 * @requires wineExists(wine)
 	 */
@@ -58,25 +58,25 @@ public class CatalogoVendas extends Catalogo {
 		}
 		return false;
 	}
-	
+
 	public void sellWine(String wine, String user, String value, String quantity) {
 		String newRow = null;
-		
+
 		try(BufferedWriter writer = new BufferedWriter(new FileWriter(sells,true))) {
 			newRow = user + SEPARATOR + wine + SEPARATOR + Double.parseDouble(value) + SEPARATOR + quantity;
     		writer.append(newRow+"\n");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		if (!sellsMap.containsKey(wine)) {
 			sellsMap.put(wine, new ArrayList<WineSell>());
 		}
 		sellsMap.get(wine).add(new WineSell(newRow));
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param wine
 	 * @requires wineExists(wine)
 	 * @return
@@ -92,17 +92,17 @@ public class CatalogoVendas extends Catalogo {
 		}
 		return price;
 	}
-	
+
 	public String getWineSalesInfo(String wine) {
 		StringBuilder sb = new StringBuilder();
 		if (sellsMap.containsKey(wine)) {
 			List<WineSell> wineSells = sellsMap.get(wine);
-			
+
 			for (WineSell w : wineSells) {
 				sb.append(w.getSellInfo());
-			}		
-		} 
-		
+			}
+		}
+
 		if (sb.length() == 0) {
 			return "No sales of this wine";
 		}
@@ -129,8 +129,8 @@ public class CatalogoVendas extends Catalogo {
 			String targetLine = targetSell.getLine();
 			targetSell.removeQuantity(Integer.parseInt(quantity));
 			String toReplace = targetSell.getLine();
-			changeLine(targetLine, toReplace, sells);	
-		}			
+			changeLine(targetLine, toReplace, sells);
+		}
 	}
 
 
@@ -150,5 +150,5 @@ public class CatalogoVendas extends Catalogo {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}	
+	}
 }

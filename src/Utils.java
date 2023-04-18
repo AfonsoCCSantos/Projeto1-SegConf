@@ -4,7 +4,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 /**
- * 
+ *
  * @author Afonso Santos - FC56368
  * @author Alexandre Figueiredo - FC57099
  * @author Raquel Domingos - FC56378
@@ -33,11 +33,11 @@ public class Utils {
         }
         return inStream;
     }
-    
+
     public static String getFileExtension(String filename) {
     	String extension = filename.contains(".") ? filename.substring(
         		filename.lastIndexOf(".")+1) : null;
     	return extension;
     }
-    
+
 }

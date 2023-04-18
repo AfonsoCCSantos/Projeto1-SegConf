@@ -4,7 +4,7 @@ import java.util.Scanner;
 
 
 /**
- * 
+ *
  * @author Afonso Santos - FC56368
  * @author Alexandre Figueiredo - FC57099
  * @author Raquel Domingos - FC56378
@@ -14,7 +14,7 @@ public class Tintolmarket {
 
     public static void main(String[] args) {
     	Scanner inputReader = new Scanner(System.in);
-    	
+
         if (args.length < 2) {
             System.err.println("Not enough arguments.");
             System.exit(-1);
@@ -26,12 +26,12 @@ public class Tintolmarket {
             port = Integer.parseInt(tokensAddress[1]);
             ipAddress = tokensAddress[0];
         }
-        
+
         String user = args[1];
         if (!ValidationLib.verifyString(user)) {
         	System.err.println("Invalid user name. It cointains invalid charaters.");
         	System.exit(-1);
-        } 
+        }
         String password = null;
         if (args.length == 3) {
             password = args[2];
@@ -40,15 +40,15 @@ public class Tintolmarket {
             System.out.println("Type your password:");
             password = inputReader.nextLine();
         }
-        
+
         TintolStub stub = new TintolStub(ipAddress,port);
         boolean res = stub.login(user, password);
-        
+
         if (!res) {
             System.err.println("Wrong password.");
             System.exit(-1);
         }
-        
+
         File receivedImagesDir = new File("receivedImages");
         if (!receivedImagesDir.exists()) {
     		if (!receivedImagesDir.mkdir()) {
@@ -56,7 +56,7 @@ public class Tintolmarket {
 				System.exit(-1);
     		}
         }
-         
+
         showMenu();
         try {
         	while (true) {
@@ -70,7 +70,7 @@ public class Tintolmarket {
                     case "s":
                     case "sell":
                         stub.sellWine(tokens);
-                        break;    
+                        break;
                     case "v":
                     case "view":
                         stub.view(tokens, user);
@@ -103,7 +103,7 @@ public class Tintolmarket {
         catch (NoSuchElementException e) {
         	System.out.println("Client will now shut down");
         	System.exit(0);
-        } 
+        }
     }
 
     private static void showMenu() {
