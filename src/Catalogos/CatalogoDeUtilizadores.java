@@ -12,7 +12,9 @@ import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 
@@ -27,11 +29,11 @@ public class CatalogoDeUtilizadores extends Catalogo {
 	private static CatalogoDeUtilizadores INSTANCE = null;
 	private static final String USERS_FILE = "serverFiles/users.txt";
 	private File users;
-	private Set<String> registeredUsers;
+	private Map<String, String> registeredUsers;
 
 	private CatalogoDeUtilizadores() {
 		users = new File(USERS_FILE);
-		registeredUsers = new HashSet<>();
+		registeredUsers = new HashMap<>();
 
 		try {
 			users.createNewFile();
@@ -47,6 +49,15 @@ public class CatalogoDeUtilizadores extends Catalogo {
 		return INSTANCE;
 	}
 	
+	public void registerUser(String user, String certificateFileName) {
+		try (BufferedWriter writer = new BufferedWriter(new FileWriter(users, true))){
+			writer.append(user + SEPARATOR + certificateFileName + "\n");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		registeredUsers.put(user, certificateFileName);
+	}
+	
 	public boolean loginUser(String user, String password, SecretKey passwordKey) {
 		BufferedReader reader = null;
 		BufferedWriter writer = null;
@@ -59,22 +70,15 @@ public class CatalogoDeUtilizadores extends Catalogo {
 
 		boolean res = false;
 		try {
-			String line = reader.readLine();
-			while (line != null && !line.split(SEPARATOR)[0].equals(user)) {
-				line = reader.readLine();
+			if (userExists(user)) {
+				res = this.registeredUsers.get(user).equals(password);
 			}
-			reader.close();
-
-			//User doesn't exist
-			if (line == null) {
+			else {
 				writer = new BufferedWriter(new FileWriter(users, true));
 				writer.append(user + SEPARATOR + password + "\n");
 				writer.close();
 				res = true;
-				registeredUsers.add(user);
-			} 
-			else {
-				res = line.split(SEPARATOR)[1].equals(password); 
+				registeredUsers.put(user, password);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -147,19 +151,24 @@ public class CatalogoDeUtilizadores extends Catalogo {
 //		}
 //		return res;
 	}
-
+	
 	public boolean userExists(String user) {
-		return registeredUsers.contains(user);
+		return registeredUsers.containsKey(user);
+	}
+	
+	public String getCertificateFileName(String userId) {
+		return registeredUsers.get(userId);
 	}
 
 	@Override
 	public void load() {
+		//TODO:decrypt
 		try (BufferedReader reader = new BufferedReader(new FileReader(users))) {
 			String line = reader.readLine();
 			String[] tokens = null;
 			while (line != null) {
 				tokens = line.split(SEPARATOR);
-				registeredUsers.add(tokens[0]);
+				registeredUsers.put(tokens[0],tokens[1]);
 				line = reader.readLine();
 			}
 		} catch (FileNotFoundException e1) {

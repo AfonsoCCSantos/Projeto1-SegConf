@@ -7,6 +7,17 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
@@ -26,12 +37,22 @@ public class TintolStub {
     private SSLSocket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
+    private KeyStore keyStore;
+    private Key privateKey;
     
-    public TintolStub(String ip, int port) {
+    public TintolStub(String ip, int port, String keyStoreFileName, String keyStorePassWord) {
         this.socket = connectToServer(ip,port);
         System.out.println();
         this.out = Utils.gOutputStream(socket);
         this.in = Utils.gInputStream(socket);
+        try {
+			this.keyStore = KeyStore.getInstance(new File(keyStoreFileName), keyStorePassWord.toCharArray());
+	        String alias = this.keyStore.aliases().nextElement();
+	        this.privateKey = this.keyStore.getKey(alias, keyStorePassWord.toCharArray());
+		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException | UnrecoverableKeyException e) {
+			e.printStackTrace();
+		}
+        
     }
     
     private static SSLSocket connectToServer(String ip, int port) {
@@ -40,26 +61,39 @@ public class TintolStub {
 		try {
 			s = (SSLSocket) sf.createSocket(ip, port);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-        
-        //Socket socket = null;
-        //try {
-        //    socket = new Socket(ip, port);
-        //} catch (IOException e) {
-        //    e.printStackTrace();
-        //}
+		}    
         return s;
     }
 
-    public boolean login(String user, String password) {
-        boolean res = false;
+    public boolean login(String userId) {
+    	boolean res = false;
+        boolean iExist = false;
+        String loginMessage = null;
+        Long nonce = 0L;
         try {
-            this.out.writeObject(user);
-            this.out.writeObject(password);
-            res = (boolean) this.in.readObject();
-        } catch (IOException | ClassNotFoundException e) {
+            this.out.writeObject(userId);
+            nonce = this.in.readLong();
+            iExist = this.in.readBoolean();
+            
+        	Signature s = Signature.getInstance("MD5withRSA");
+        	s.initSign((PrivateKey) this.privateKey);
+        	s.update(nonce.byteValue());
+        	byte[] signedNonce = s.sign();
+            if (iExist) {
+            	out.writeObject(signedNonce);
+            }
+            else {
+            	out.writeObject(nonce);
+            	out.writeObject(signedNonce);
+            	String alias = this.keyStore.aliases().nextElement();
+            	Certificate myCertificate = this.keyStore.getCertificate(alias);
+            	out.writeObject(myCertificate);
+            }
+            loginMessage = (String) in.readObject();
+            res = in.readBoolean();
+            System.out.println(loginMessage);
+        } catch (IOException | ClassNotFoundException | NoSuchAlgorithmException | InvalidKeyException | SignatureException | KeyStoreException e) {
             e.printStackTrace();
         }
         return res;

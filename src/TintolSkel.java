@@ -2,14 +2,30 @@ import Catalogos.*;
 
 import javax.crypto.SecretKey;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.util.Random;
 
 
 /**
@@ -20,6 +36,9 @@ import java.net.Socket;
  *
  */
 public class TintolSkel {
+    
+    private static final String FAILED_LOGIN_MESSAGE = "Log in failed";
+    private static final String SUCCESS_LOGIN_MESSAGE = "Log in succeeded";
 	
     private ObjectOutputStream out;
     private ObjectInputStream in;
@@ -29,8 +48,11 @@ public class TintolSkel {
     private CatalogoDeMensagens catMessages;
     private CatalogoDeSaldos catSaldos;
 	private SecretKey passwordKey;
+	private Random rd;
+    private KeyStore keyStore;
+    private Key privateKey;
 
-    public TintolSkel(Socket inSocket, SecretKey passwordKey) {
+    public TintolSkel(Socket inSocket, SecretKey passwordKey, String keyStoreFileName, String keyStorePassword) {
         this.in = Utils.gInputStream(inSocket);
         this.out = Utils.gOutputStream(inSocket);
         this.catUsers = CatalogoDeUtilizadores.getInstance();
@@ -39,52 +61,105 @@ public class TintolSkel {
         this.catMessages = CatalogoDeMensagens.getInstance();
         this.catSaldos = CatalogoDeSaldos.getInstance();
 		this.passwordKey = passwordKey;
+		this.rd = new Random();
+	
+		try {
+			this.keyStore = KeyStore.getInstance(new File(keyStoreFileName), keyStorePassword.toCharArray());
+			String alias = this.keyStore.aliases().nextElement();
+	        this.privateKey = this.keyStore.getKey(alias, keyStorePassword.toCharArray());
+		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException | UnrecoverableKeyException e) {
+			e.printStackTrace();
+		}
+   		
     }
 
     public String loginUser() {
         String user = null;
-        String password = null;
-
+        Long nonce = this.rd.nextLong();
+                
         try {
             user = (String) in.readObject();
-            password = (String) in.readObject();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        if (!ValidationLib.verifyString(user)) {
-            System.err.println("Invalid user name. It cointains invalid charaters.");
-        }
-
-        boolean logged_in = false;
-        synchronized (catUsers) {
-            logged_in = catUsers.loginUser(user,password,passwordKey);
-        }
-        synchronized (this.catSaldos) {
-        	if (!catSaldos.userExists(user)) {
-        		catSaldos.registerUser(user);
-        	}
-		}
-
+        
+        boolean userExists = this.catUsers.userExists(user);
+        
         try {
-            out.writeObject(logged_in);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        if (!logged_in) {
-        	try {
-				out.close();
-				in.close();
-			} catch (IOException e) {
+			out.writeObject(nonce);
+	        out.writeObject(userExists); 
+		} catch (IOException e) {
+			e.printStackTrace();
+		} 
+        
+        if (userExists) {
+	        String certificateFileName  = this.catUsers.getCertificateFileName(user);
+	        PublicKey userPublicKey = null;
+	        FileInputStream fis;
+			try {
+				fis = new FileInputStream("serverFiles/" + certificateFileName);
+				CertificateFactory cf = CertificateFactory.getInstance("X.509");
+				Certificate userCertificate = cf.generateCertificate(fis);
+				userPublicKey = userCertificate.getPublicKey();
+			} catch (FileNotFoundException | CertificateException e) {
 				e.printStackTrace();
 			}
-        	return null;
+	  			
+			byte[] signedNonce;
+			try {
+				signedNonce = (byte[]) in.readObject();
+				Signature s = Signature.getInstance("MD5withRSA");
+				s.initVerify(userPublicKey);
+				s.update(nonce.byteValue());
+				if(s.verify(signedNonce)) {
+	                out.writeObject(SUCCESS_LOGIN_MESSAGE);
+					out.writeObject(true);
+	                return user;
+	            }
+				out.writeObject(FAILED_LOGIN_MESSAGE);
+	            out.writeObject(false);
+	            out.close();
+	            in.close();
+			} catch (ClassNotFoundException | IOException | NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+				e.printStackTrace();
+			}
+            return null;     
         }
-
-        return user;
+        //user doesnt exist
+        else {
+			try {
+				Long receivedNonce = in.readLong();
+				byte[] receivedSignedNonce = (byte[]) in.readObject();
+	        	Certificate receivedCertificate = (Certificate) in.readObject(); 
+	        	PublicKey usersPublicKey = receivedCertificate.getPublicKey();
+	        	Signature s = Signature.getInstance("MD5withRSA");
+				s.initVerify(usersPublicKey);
+				s.update(nonce.byteValue());
+	        	boolean isTheSameNonce = receivedNonce == nonce;
+	        	boolean isTheNonceSigned = s.verify(receivedSignedNonce);
+	        	
+	        	if (isTheSameNonce && isTheNonceSigned) {
+	                String certificateFileName =user + ".cer";
+	        		byte[] buf = receivedCertificate.getEncoded();
+	        		FileOutputStream os = new FileOutputStream("serverFiles/" + certificateFileName);
+	        		os.write(buf);
+	        		os.close();	
+	        		this.catUsers.registerUser(user,certificateFileName);
+	        		out.writeObject(SUCCESS_LOGIN_MESSAGE);
+	        		out.writeObject(true);
+	        		return user;
+	        	}
+	        	else {
+	        		out.writeObject(FAILED_LOGIN_MESSAGE);
+	        		out.writeObject(false);
+	        	}
+			} catch (IOException | ClassNotFoundException | NoSuchAlgorithmException | SignatureException | InvalidKeyException | CertificateEncodingException e) {
+				e.printStackTrace();
+			}	
+        }
+        return null;
     }
 
     public void addWine(String wine, String imagePath) {

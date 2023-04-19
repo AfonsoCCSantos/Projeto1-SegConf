@@ -12,16 +12,16 @@ import java.util.Scanner;
  */
 public class Tintolmarket {
 	
+	private static final String TRUSTSTORE_PASSWORD = "password";
+	
     public static void main(String[] args) {
     	Scanner inputReader = new Scanner(System.in);
-    	
-    	System.setProperty("javax.net.ssl.trustStore", "userFiles/truststore.client");
-        System.setProperty("javax.net.ssl.trustStorePassword", "password");//TODO : mudar para arg
-        
-        if (args.length < 2) {
+        if (args.length < 5) {
             System.err.println("Not enough arguments.");
             System.exit(-1);
         }
+    	
+        
         int port = 12345;
         String ipAddress = args[0];
         if (args[0].contains(":")) {
@@ -30,22 +30,16 @@ public class Tintolmarket {
             ipAddress = tokensAddress[0];
         }
         
-        String user = args[1];
-        if (!ValidationLib.verifyString(user)) {
-        	System.err.println("Invalid user name. It cointains invalid charaters.");
-        	System.exit(-1);
-        }
-        String password = null;
-        if (args.length == 3) {
-            password = args[2];
-        }
-        else {
-            System.out.println("Type your password:");
-            password = inputReader.nextLine();
-        }
-
-        TintolStub stub = new TintolStub(ipAddress,port);
-        boolean res = stub.login(user, password);
+        String trustStoreFileName = args[1];
+        String keyStoreFileName = args[2];
+        String keyStorePassword = args[3];
+        String userId = args[4];
+    	
+    	System.setProperty("javax.net.ssl.trustStore", "userFiles/" + trustStoreFileName);
+        System.setProperty("javax.net.ssl.trustStorePassword", TRUSTSTORE_PASSWORD);
+        
+        TintolStub stub = new TintolStub(ipAddress,port,keyStoreFileName,keyStorePassword);
+        boolean res = stub.login(userId);
 
         if (!res) {
             System.err.println("Wrong password.");
@@ -70,7 +64,7 @@ public class Tintolmarket {
                         break;
                     case "v":
                     case "view":
-                        stub.view(tokens, user);
+                        stub.view(tokens, userId);
                         break;
                     case "b":
                     case "buy":

@@ -34,24 +34,24 @@ public class TintolmarketServer {
 		}
 		int port = 12345;
 		String passwordCipher;
-		String keystore;
+		String keystoreFileName;
 		String keyStorePassword;
 		if(args.length == 4) {
 			port = Integer.parseInt(args[0]);
 			passwordCipher = args[1];
-			keystore = args[2];
+			keystoreFileName = args[2];
 			keyStorePassword = args[3];
 		}
 		else {
 			passwordCipher = args[0];
-			keystore = args[1];
+			keystoreFileName = args[1];
 			keyStorePassword = args[2];
 		}
 
 		SecretKey passwordKey = getPasswordKey(passwordCipher);
-		System.setProperty("javax.net.ssl.keyStore", SERVER_DIR+"/" + keystore);
+		System.setProperty("javax.net.ssl.keyStore", SERVER_DIR+"/" + keystoreFileName);
         System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
-        startServer(port, passwordKey);
+        startServer(port, passwordKey, keystoreFileName, keyStorePassword);
     }
 
 	private static SecretKey getPasswordKey(String password) {
@@ -69,7 +69,7 @@ public class TintolmarketServer {
 		return key;
 	}
 
-    public static void startServer(int port, SecretKey passwordKey) {
+    public static void startServer(int port, SecretKey passwordKey, String keyStoreFileName, String keyStorePassword) {
     	File serverDir = new File(SERVER_DIR);
     	if (!serverDir.exists()) {
     		if (!serverDir.mkdir()) {
@@ -95,7 +95,7 @@ public class TintolmarketServer {
         while (true) {
             try {
 				Socket inSocket = serverSocket.accept();
-				ServerThread newServerThread = new ServerThread(inSocket, passwordKey);
+				ServerThread newServerThread = new ServerThread(inSocket, passwordKey,keyStoreFileName,keyStorePassword);
 				newServerThread.start();
 		    }
 		    catch (IOException e) {

@@ -14,15 +14,19 @@ public class ServerThread extends Thread {
 
     private Socket socket = null;
 	private SecretKey passwordKey = null;
+	private String keyStoreFileName = null;
+	private String keyStorePassword = null;
 
 
-    public ServerThread(Socket inSocket, SecretKey passwordKey) {
+    public ServerThread(Socket inSocket, SecretKey passwordKey, String keyStoreFileName, String keyStorePassword) {
         socket = inSocket;
 		this.passwordKey = passwordKey;
+		this.keyStoreFileName = keyStoreFileName;
+		this.keyStorePassword = keyStorePassword;
     }
 
     public void run() {
-        TintolSkel skel = new TintolSkel(socket, passwordKey);
+        TintolSkel skel = new TintolSkel(socket, passwordKey,keyStoreFileName,keyStorePassword);
 
         String user = skel.loginUser();
         if (user == null) {
