@@ -20,7 +20,7 @@ import java.net.Socket;
  *
  */
 public class TintolSkel {
-
+	
     private ObjectOutputStream out;
     private ObjectInputStream in;
     private CatalogoDeUtilizadores catUsers;

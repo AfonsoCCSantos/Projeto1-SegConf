@@ -11,10 +11,13 @@ import java.util.Scanner;
  *
  */
 public class Tintolmarket {
-
+	
     public static void main(String[] args) {
     	Scanner inputReader = new Scanner(System.in);
-
+    	
+    	System.setProperty("javax.net.ssl.trustStore", "userFiles/truststore.client");
+        System.setProperty("javax.net.ssl.trustStorePassword", "password");//TODO : mudar para arg
+        
         if (args.length < 2) {
             System.err.println("Not enough arguments.");
             System.exit(-1);
@@ -26,7 +29,7 @@ public class Tintolmarket {
             port = Integer.parseInt(tokensAddress[1]);
             ipAddress = tokensAddress[0];
         }
-
+        
         String user = args[1];
         if (!ValidationLib.verifyString(user)) {
         	System.err.println("Invalid user name. It cointains invalid charaters.");
@@ -48,15 +51,9 @@ public class Tintolmarket {
             System.err.println("Wrong password.");
             System.exit(-1);
         }
-
-        File receivedImagesDir = new File("receivedImages");
-        if (!receivedImagesDir.exists()) {
-    		if (!receivedImagesDir.mkdir()) {
-				System.err.println("The received images directory could not be created\n");
-				System.exit(-1);
-    		}
-        }
-
+        
+        initialiseFolderStructure();
+        
         showMenu();
         try {
         	while (true) {
@@ -103,6 +100,16 @@ public class Tintolmarket {
         catch (NoSuchElementException e) {
         	System.out.println("Client will now shut down");
         	System.exit(0);
+        }
+    }
+    
+    private static void initialiseFolderStructure() {
+    	File receivedImagesDir = new File("userFiles");
+        if (!receivedImagesDir.exists()) {
+    		if (!receivedImagesDir.mkdir()) {
+				System.err.println("The userFiles directory could not be created\n");
+				System.exit(-1);
+    		}
         }
     }
 

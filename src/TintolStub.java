@@ -8,6 +8,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+
 
 /**
  *
@@ -18,26 +22,35 @@ import java.net.Socket;
  */
 public class TintolStub {
     private static final String INVALID_FORMAT = "Invalid Format";
-
-    private Socket socket;
+    
+    private SSLSocket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
-
+    
     public TintolStub(String ip, int port) {
         this.socket = connectToServer(ip,port);
         System.out.println();
         this.out = Utils.gOutputStream(socket);
         this.in = Utils.gInputStream(socket);
     }
-
-    private static Socket connectToServer(String ip, int port) {
-        Socket socket = null;
-        try {
-            socket = new Socket(ip, port);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return socket;
+    
+    private static SSLSocket connectToServer(String ip, int port) {
+        SocketFactory sf = SSLSocketFactory.getDefault();
+        SSLSocket s = null;
+		try {
+			s = (SSLSocket) sf.createSocket(ip, port);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
+        //Socket socket = null;
+        //try {
+        //    socket = new Socket(ip, port);
+        //} catch (IOException e) {
+        //    e.printStackTrace();
+        //}
+        return s;
     }
 
     public boolean login(String user, String password) {
@@ -172,7 +185,7 @@ public class TintolStub {
         if (existsWine) {
         	try {
         		extension = (String) in.readObject();
-        		imageDir = "receivedImages/" + tokens[1] + "_" + user + "." + extension;
+        		imageDir = "userFiles/" + tokens[1] + "_" + user + "." + extension;
         		byte[] fileContent = (byte[]) this.in.readObject();
         		FileOutputStream fos = new FileOutputStream(new File(imageDir));
         		fos.write(fileContent);

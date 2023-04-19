@@ -3,6 +3,10 @@ import Catalogos.*;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
+import javax.net.ServerSocketFactory;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -19,10 +23,10 @@ import java.security.spec.InvalidKeySpecException;
  *
  */
 public class TintolmarketServer {
-
+	
 	private static final String SERVER_DIR = "serverFiles";
 	private static final String SERVER_DIR_IMAGES = SERVER_DIR + "/" + "images";
-
+	
     public static void main(String[] args) {
 		if(args.length < 1) {
 			System.out.println("Not enough arguments given.");
@@ -76,8 +80,11 @@ public class TintolmarketServer {
 				System.exit(-1);
     		}
     	}
+    	
+    	System.setProperty("javax.net.ssl.keyStore", SERVER_DIR+"/keystore.server");
+        System.setProperty("javax.net.ssl.keyStorePassword", "password"); //TODO: mudar para args
 
-        ServerSocket serverSocket = initSocket(port);
+        SSLServerSocket serverSocket = initSocket(port);
         CatalogoDeMensagens.getInstance().load();
         CatalogoDeVinhos.getInstance().load();
         CatalogoVendas.getInstance().load();
@@ -97,15 +104,23 @@ public class TintolmarketServer {
 
     }
 
-    private static ServerSocket initSocket(int port) {
-        ServerSocket serverSocket = null;
-        try {
-			serverSocket = new ServerSocket(port);
+    private static SSLServerSocket initSocket(int port) {
+		ServerSocketFactory ssf = SSLServerSocketFactory.getDefault();
+        SSLServerSocket ss = null;
+		try {
+			ss = (SSLServerSocket) ssf.createServerSocket(port);
 		} catch (IOException e) {
-			System.err.println(e.getMessage());
-			System.exit(-1);
+			e.printStackTrace();
 		}
-        return serverSocket;
+		
+       // ServerSocket serverSocket = null;
+        //try {
+		//	serverSocket = new ServerSocket(port);
+		//} catch (IOException e) {
+			//System.err.println(e.getMessage());
+			//System.exit(-1);
+		//}
+        return ss;
     }
 
 

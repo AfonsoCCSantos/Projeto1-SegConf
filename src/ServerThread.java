@@ -33,7 +33,7 @@ public class ServerThread extends Thread {
 			}
         	return;
         }
-
+        
         //The client application will now print the menu
         String command = null;
         	while (true) {
