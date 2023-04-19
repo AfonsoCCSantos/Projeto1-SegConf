@@ -28,7 +28,7 @@ public class TintolmarketServer {
 	private static final String SERVER_DIR_IMAGES = SERVER_DIR + "/" + "images";
 	
     public static void main(String[] args) {
-		if(args.length < 1) {
+		if(args.length < 3) {
 			System.out.println("Not enough arguments given.");
 			System.exit(-1);
 		}
@@ -49,6 +49,8 @@ public class TintolmarketServer {
 		}
 
 		SecretKey passwordKey = getPasswordKey(passwordCipher);
+		System.setProperty("javax.net.ssl.keyStore", SERVER_DIR+"/" + keystore);
+        System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
         startServer(port, passwordKey);
     }
 
@@ -81,8 +83,7 @@ public class TintolmarketServer {
     		}
     	}
     	
-    	System.setProperty("javax.net.ssl.keyStore", SERVER_DIR+"/keystore.server");
-        System.setProperty("javax.net.ssl.keyStorePassword", "password"); //TODO: mudar para args
+    	
 
         SSLServerSocket serverSocket = initSocket(port);
         CatalogoDeMensagens.getInstance().load();
