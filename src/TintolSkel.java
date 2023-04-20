@@ -1,8 +1,4 @@
-import Catalogos.*;
-
-import javax.crypto.SecretKey;
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -12,8 +8,6 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateEncodingException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyStore;
@@ -23,9 +17,22 @@ import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.Random;
+
+import javax.crypto.SecretKey;
+
+import Catalogos.CatalogoDeMensagens;
+import Catalogos.CatalogoDeSaldos;
+import Catalogos.CatalogoDeUtilizadores;
+import Catalogos.CatalogoDeVinhos;
+import Catalogos.CatalogoVendas;
+import logs.Blockchain;
+import logs.BuyTransaction;
+import logs.SellTransaction;
 
 
 /**
@@ -47,6 +54,7 @@ public class TintolSkel {
     private CatalogoVendas catVendas;
     private CatalogoDeMensagens catMessages;
     private CatalogoDeSaldos catSaldos;
+    private Blockchain blockchain;
 	private SecretKey passwordKey;
 	private Random rd;
     private KeyStore keyStore;
@@ -59,6 +67,7 @@ public class TintolSkel {
         this.catWines = CatalogoDeVinhos.getInstance();
         this.catVendas = CatalogoVendas.getInstance();
         this.catMessages = CatalogoDeMensagens.getInstance();
+        this.blockchain = Blockchain.getInstance();
         this.catSaldos = CatalogoDeSaldos.getInstance();
 		this.passwordKey = passwordKey;
 		this.rd = new Random();
@@ -223,6 +232,10 @@ public class TintolSkel {
         synchronized (this.catWines) {
             this.catWines.updateQuantity(wine, Integer.parseInt(quantity));
         }
+        
+        synchronized (this.blockchain) {
+        	this.blockchain.writeTransaction(new SellTransaction(wine, quantity, value, user));
+		}
 
         try {
 			out.writeObject("This wine is now for sell.");
@@ -347,6 +360,10 @@ public class TintolSkel {
     	synchronized (this.catWines) {
     		this.catWines.updateQuantity(wine, -Integer.parseInt(quantity));
     	}
+    	
+    	 synchronized (this.blockchain) {
+         	this.blockchain.writeTransaction(new BuyTransaction(wine, quantity, String.valueOf(winePrice), user));
+ 		}
 
     	try {
 			out.writeObject("The wine was bought.");

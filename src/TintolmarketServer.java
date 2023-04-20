@@ -26,6 +26,7 @@ public class TintolmarketServer {
 	
 	private static final String SERVER_DIR = "serverFiles";
 	private static final String SERVER_DIR_IMAGES = SERVER_DIR + "/" + "images";
+	private static final String SERVER_DIR_BLOCKCHAIN = SERVER_DIR + "/" + "blockchain";
 	
     public static void main(String[] args) {
 		if(args.length < 3) {
@@ -79,6 +80,12 @@ public class TintolmarketServer {
     		File serverDirImages = new File(SERVER_DIR_IMAGES);
     		if (!serverDirImages.mkdir()) {
     			System.err.println("The images directory could not be created\n");
+				System.exit(-1);
+    		}
+    		
+    		File serverDirBlockchain = new File(SERVER_DIR_BLOCKCHAIN);
+    		if (!serverDirBlockchain.mkdir()) {
+    			System.err.println("The blockchain directory could not be created\n");
 				System.exit(-1);
     		}
     	}
