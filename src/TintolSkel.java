@@ -130,15 +130,20 @@ public class TintolSkel {
         //user doesnt exist
         else {
 			try {
-				Long receivedNonce = in.readLong();
+				Long receivedNonce = (Long) in.readObject();
 				byte[] receivedSignedNonce = (byte[]) in.readObject();
 	        	Certificate receivedCertificate = (Certificate) in.readObject(); 
 	        	PublicKey usersPublicKey = receivedCertificate.getPublicKey();
 	        	Signature s = Signature.getInstance("MD5withRSA");
 				s.initVerify(usersPublicKey);
 				s.update(nonce.byteValue());
-	        	boolean isTheSameNonce = receivedNonce == nonce;
+	        	boolean isTheSameNonce = receivedNonce.equals(nonce);
 	        	boolean isTheNonceSigned = s.verify(receivedSignedNonce);
+	        	
+	        	System.out.println(isTheSameNonce);
+	        	System.out.println(isTheNonceSigned);
+	        	
+	        	
 	        	
 	        	if (isTheSameNonce && isTheNonceSigned) {
 	                String certificateFileName =user + ".cer";

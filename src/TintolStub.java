@@ -72,8 +72,8 @@ public class TintolStub {
         Long nonce = 0L;
         try {
             this.out.writeObject(userId);
-            nonce = this.in.readLong();
-            iExist = this.in.readBoolean();
+            nonce = (Long) this.in.readObject();
+            iExist = (boolean) this.in.readObject();
             
         	Signature s = Signature.getInstance("MD5withRSA");
         	s.initSign((PrivateKey) this.privateKey);
@@ -90,7 +90,7 @@ public class TintolStub {
             	out.writeObject(myCertificate);
             }
             loginMessage = (String) in.readObject();
-            res = in.readBoolean();
+            res = (boolean) in.readObject();
             System.out.println(loginMessage);
         } catch (IOException | ClassNotFoundException | NoSuchAlgorithmException | InvalidKeyException | SignatureException | KeyStoreException e) {
             e.printStackTrace();
