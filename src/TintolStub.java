@@ -42,11 +42,10 @@ public class TintolStub {
     
     public TintolStub(String ip, int port, String keyStoreFileName, String keyStorePassWord) {
         this.socket = connectToServer(ip,port);
-        System.out.println();
         this.out = Utils.gOutputStream(socket);
         this.in = Utils.gInputStream(socket);
         try {
-			this.keyStore = KeyStore.getInstance(new File(keyStoreFileName), keyStorePassWord.toCharArray());
+			this.keyStore = KeyStore.getInstance(new File("userFiles/" + keyStoreFileName), keyStorePassWord.toCharArray());
 	        String alias = this.keyStore.aliases().nextElement();
 	        this.privateKey = this.keyStore.getKey(alias, keyStorePassWord.toCharArray());
 		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException | UnrecoverableKeyException e) {

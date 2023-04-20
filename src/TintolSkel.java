@@ -64,7 +64,7 @@ public class TintolSkel {
 		this.rd = new Random();
 	
 		try {
-			this.keyStore = KeyStore.getInstance(new File(keyStoreFileName), keyStorePassword.toCharArray());
+			this.keyStore = KeyStore.getInstance(new File("serverFiles/" + keyStoreFileName), keyStorePassword.toCharArray());
 			String alias = this.keyStore.aliases().nextElement();
 	        this.privateKey = this.keyStore.getKey(alias, keyStorePassword.toCharArray());
 		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException | UnrecoverableKeyException e) {
