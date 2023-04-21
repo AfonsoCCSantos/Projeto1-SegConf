@@ -57,10 +57,9 @@ public class TintolSkel {
     private Blockchain blockchain;
 	private SecretKey passwordKey;
 	private Random rd;
-    private KeyStore keyStore;
     private Key privateKey;
 
-    public TintolSkel(Socket inSocket, SecretKey passwordKey, String keyStoreFileName, String keyStorePassword) {
+    public TintolSkel(Socket inSocket, SecretKey passwordKey, Key privateKey) {
         this.in = Utils.gInputStream(inSocket);
         this.out = Utils.gOutputStream(inSocket);
         this.catUsers = CatalogoDeUtilizadores.getInstance();
@@ -71,14 +70,8 @@ public class TintolSkel {
         this.catSaldos = CatalogoDeSaldos.getInstance();
 		this.passwordKey = passwordKey;
 		this.rd = new Random();
-	
-		try {
-			this.keyStore = KeyStore.getInstance(new File("serverFiles/" + keyStoreFileName), keyStorePassword.toCharArray());
-			String alias = this.keyStore.aliases().nextElement();
-	        this.privateKey = this.keyStore.getKey(alias, keyStorePassword.toCharArray());
-		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException | UnrecoverableKeyException e) {
-			e.printStackTrace();
-		}
+		this.passwordKey = passwordKey;
+		this.privateKey = privateKey;
    		
     }
 

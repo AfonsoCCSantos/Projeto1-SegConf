@@ -1,4 +1,13 @@
-import Catalogos.*;
+import java.io.File;
+import java.io.IOException;
+import java.net.Socket;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.UnrecoverableKeyException;
+import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
@@ -7,12 +16,12 @@ import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
+import Catalogos.CatalogoDeMensagens;
+import Catalogos.CatalogoDeSaldos;
+import Catalogos.CatalogoDeUtilizadores;
+import Catalogos.CatalogoDeVinhos;
+import Catalogos.CatalogoVendas;
+import logs.Blockchain;
 
 
 /**
@@ -27,6 +36,8 @@ public class TintolmarketServer {
 	private static final String SERVER_DIR = "serverFiles";
 	private static final String SERVER_DIR_IMAGES = SERVER_DIR + "/" + "images";
 	private static final String SERVER_DIR_BLOCKCHAIN = SERVER_DIR + "/" + "blockchain";
+	private static final String FAILED_INTEGRITY_VERIFICATION_ERROR_MSG = 
+			"Failed to verify the integrity of the blockchain";
 	
     public static void main(String[] args) {
 		if(args.length < 3) {
@@ -90,6 +101,19 @@ public class TintolmarketServer {
     		}
     	}
     	
+    	//Get privateKey
+    	KeyStore keyStore = null;
+    	PrivateKey privateKey = null;
+    	PublicKey publicKey = null;
+    	try {
+			keyStore = KeyStore.getInstance(new File("serverFiles/" + keyStoreFileName), keyStorePassword.toCharArray());
+			String alias = keyStore.aliases().nextElement();
+	       privateKey = (PrivateKey) keyStore.getKey(alias, keyStorePassword.toCharArray());
+	       publicKey = keyStore.getCertificate(alias).getPublicKey();
+	       
+		} catch (KeyStoreException | NoSuchAlgorithmException | IOException | UnrecoverableKeyException | java.security.cert.CertificateException e) {
+			e.printStackTrace();
+		}
     	
 
         SSLServerSocket serverSocket = initSocket(port);
@@ -98,11 +122,17 @@ public class TintolmarketServer {
         CatalogoVendas.getInstance().load();
         CatalogoDeUtilizadores.getInstance().load();
         CatalogoDeSaldos.getInstance().load();
+        Blockchain bc = Blockchain.getInstance();
+        if(!bc.verifyIntegrityOfBlockchain()) {
+        	System.out.println(FAILED_INTEGRITY_VERIFICATION_ERROR_MSG);
+			System.exit(-1);
+        }
+        bc.load(privateKey, publicKey);
 
         while (true) {
             try {
 				Socket inSocket = serverSocket.accept();
-				ServerThread newServerThread = new ServerThread(inSocket, passwordKey,keyStoreFileName,keyStorePassword);
+				ServerThread newServerThread = new ServerThread(inSocket, passwordKey,privateKey);
 				newServerThread.start();
 		    }
 		    catch (IOException e) {

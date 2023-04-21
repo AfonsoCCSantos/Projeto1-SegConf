@@ -1,6 +1,8 @@
-import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.net.Socket;
+import java.security.Key;
+
+import javax.crypto.SecretKey;
 
 
 /**
@@ -14,19 +16,18 @@ public class ServerThread extends Thread {
 
     private Socket socket = null;
 	private SecretKey passwordKey = null;
-	private String keyStoreFileName = null;
-	private String keyStorePassword = null;
+	private Key privateKey;
 
 
-    public ServerThread(Socket inSocket, SecretKey passwordKey, String keyStoreFileName, String keyStorePassword) {
+    public ServerThread(Socket inSocket, SecretKey passwordKey, Key privateKey) {
         socket = inSocket;
 		this.passwordKey = passwordKey;
-		this.keyStoreFileName = keyStoreFileName;
-		this.keyStorePassword = keyStorePassword;
+		this.privateKey = privateKey;
+		
     }
 
     public void run() {
-        TintolSkel skel = new TintolSkel(socket, passwordKey,keyStoreFileName,keyStorePassword);
+        TintolSkel skel = new TintolSkel(socket, passwordKey,privateKey);
 
         String user = skel.loginUser();
         if (user == null) {
