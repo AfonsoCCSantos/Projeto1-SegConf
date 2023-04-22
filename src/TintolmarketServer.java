@@ -80,7 +80,7 @@ public class TintolmarketServer {
 		}
 		return key;
 	}
-
+	
     public static void startServer(int port, SecretKey passwordKey, String keyStoreFileName, String keyStorePassword) {
     	File serverDir = new File(SERVER_DIR);
     	if (!serverDir.exists()) {
@@ -88,18 +88,23 @@ public class TintolmarketServer {
 				System.err.println("The server directory could not be created\n");
 				System.exit(-1);
     		}
-    		File serverDirImages = new File(SERVER_DIR_IMAGES);
-    		if (!serverDirImages.mkdir()) {
-    			System.err.println("The images directory could not be created\n");
-				System.exit(-1);
-    		}
-    		
-    		File serverDirBlockchain = new File(SERVER_DIR_BLOCKCHAIN);
-    		if (!serverDirBlockchain.mkdir()) {
-    			System.err.println("The blockchain directory could not be created\n");
-				System.exit(-1);
-    		}
     	}
+    	
+		File serverDirImages = new File(SERVER_DIR_IMAGES);
+		if (!serverDirImages.exists()) {
+			if (!serverDirImages.mkdir()) {
+				System.err.println("The images directory could not be created\n");
+				System.exit(-1);
+			}
+		}
+		
+		File serverDirBlockchain = new File(SERVER_DIR_BLOCKCHAIN);
+		if (!serverDirBlockchain.exists()) {
+			if (!serverDirBlockchain.mkdir()) {
+				System.err.println("The blockchain directory could not be created\n");
+				System.exit(-1);
+			}
+		}
     	
     	//Get privateKey
     	KeyStore keyStore = null;
@@ -123,11 +128,15 @@ public class TintolmarketServer {
         CatalogoDeUtilizadores.getInstance().load();
         CatalogoDeSaldos.getInstance().load();
         Blockchain bc = Blockchain.getInstance();
+        bc.setPrivateKey(privateKey);
+        bc.setPublicKey(publicKey);
+        
         if(!bc.verifyIntegrityOfBlockchain()) {
         	System.out.println(FAILED_INTEGRITY_VERIFICATION_ERROR_MSG);
 			System.exit(-1);
         }
-        bc.load(privateKey, publicKey);
+        
+        bc.load();
 
         while (true) {
             try {

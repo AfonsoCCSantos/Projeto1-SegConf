@@ -145,8 +145,6 @@ public class TintolSkel {
 	        	System.out.println(isTheSameNonce);
 	        	System.out.println(isTheNonceSigned);
 	        	
-	        	
-	        	
 	        	if (isTheSameNonce && isTheNonceSigned) {
 	                String certificateFileName =user + ".cer";
 	        		byte[] buf = receivedCertificate.getEncoded();
@@ -154,6 +152,7 @@ public class TintolSkel {
 	        		os.write(buf);
 	        		os.close();	
 	        		this.catUsers.registerUser(user,certificateFileName);
+	        		this.catSaldos.registerUser(user);
 	        		out.writeObject(SUCCESS_LOGIN_MESSAGE);
 	        		out.writeObject(true);
 	        		return user;
@@ -171,7 +170,7 @@ public class TintolSkel {
 
     public void addWine(String wine, String imagePath) {
     	boolean res = false;
-
+    	
     	synchronized (this.catWines) {
     		res = this.catWines.registerWine(wine, imagePath);
     	}

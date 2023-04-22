@@ -115,6 +115,7 @@ public class TintolStub {
         }
 
         File image = new File(tokens[2]);
+        System.out.println(image);
         if (!image.exists()) {
         	System.out.println("Typed image does not exist.");
             return;
