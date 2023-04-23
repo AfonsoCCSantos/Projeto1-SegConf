@@ -2,16 +2,10 @@ package logs;
 
 import java.io.BufferedReader;
 import java.io.FileOutputStream;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.ObjectOutputStream;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.BufferedOutputStream;
 import java.io.ObjectInputStream;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -22,15 +16,15 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.io.ByteArrayOutputStream;
+import java.security.SignedObject;
 
 public class Blockchain {
 	private static final String SERVER_FILES_BLOCKCHAIN = "serverFiles/blockchain";
-	private static final int N_TRANSACTIONS_LINE = 2;
-	private static final String SEPARATOR = "=";
 	private static Blockchain INSTANCE = null;
 	private File currentBlock;
-	private int currentNumTransactions;
-	private int currentBlockId = 0;
+	private long currentNumTransactions;
+	private long currentBlockId = 0;
 	private PrivateKey privateKey;
 	private PublicKey publicKey;
 
@@ -57,9 +51,21 @@ public class Blockchain {
 	
 	
 	public void writeTransaction(Transaction transaction) {
-		try (BufferedWriter writer = new BufferedWriter(new FileWriter(currentBlock, true))) {
-			writer.append(transaction.toString() + "\n");
-			
+		Bloco toUpdate = null;
+		try {
+			FileInputStream fis = new FileInputStream(currentBlock);
+			ObjectInputStream ois = new ObjectInputStream(fis);
+			toUpdate = (Bloco) ois.readObject();
+			ois.close();
+		} catch (IOException | ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		try {
+			FileOutputStream fos = new FileOutputStream(currentBlock);
+			ObjectOutputStream oos = new ObjectOutputStream(fos);
+			toUpdate.getTransactions().add(transaction.toString());
+			oos.writeObject(toUpdate);
+			oos.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -74,15 +80,14 @@ public class Blockchain {
 	
 	//@requires verifiyIntegrityOfBlockchain
 	public void load() {
-		try (BufferedReader reader = new BufferedReader(new FileReader(currentBlock))) {
-			reader.readLine();
-			String[] idLineTokens = reader.readLine().split(SEPARATOR);
-			this.currentBlockId = Integer.parseInt(idLineTokens[1]);
-			String[] nTrxLineTokens= reader.readLine().split(SEPARATOR);
-			this.currentNumTransactions = Integer.parseInt(nTrxLineTokens[1]);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
+		try {
+			FileInputStream fis = new FileInputStream(currentBlock);
+			ObjectInputStream ois = new ObjectInputStream(fis);
+			Bloco block = (Bloco) ois.readObject();
+			this.currentBlockId = block.getBlockId();
+			this.currentNumTransactions = block.getNumOfTransactions();
+			ois.close();
+		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();
 		}
 	}
@@ -112,179 +117,116 @@ public class Blockchain {
 	
 	public void createNewBlock() {
 		byte[] hash = new byte[32];
-		
-		if (currentBlockId >= 1) {
-			//assinar bloco fica no curr
-			Signature s = null;
-			byte[] blockSignature = null;
-			StringBuilder allLines = null;
-			try (BufferedReader reader = new BufferedReader(new FileReader(currentBlock))) {
-				s = Signature.getInstance("MD5withRSA");
-				s.initSign(privateKey);
-				allLines = new StringBuilder(readAllLines(reader));
-				
-				s.update(allLines.toString().getBytes());
-				blockSignature = s.sign();
-			} catch (IOException | NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
-				e.printStackTrace();
-			}		
-			
-			String signatureLine = new String(blockSignature) + "\n";
-			allLines.append(signatureLine);
-			try (BufferedWriter writer = new BufferedWriter(new FileWriter(currentBlock, true))){
-				for (byte b: blockSignature) {
-					writer.append(b+" ");
-				}
-//				writer.append(signatureLine); //escrever assinatura			
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			
-			//obter hash do bloco
-			MessageDigest md = null;
-			try {
-				md = MessageDigest.getInstance("SHA-256");
-				hash = md.digest(allLines.toString().getBytes());
-			} catch (NoSuchAlgorithmException e) {
-				e.printStackTrace();
-			}
-		}
-		
+		Bloco block = null;
 		currentBlockId++;
-		currentBlock = new File(SERVER_FILES_BLOCKCHAIN + "/block_" + this.currentBlockId + ".blk");
-		
-		//create new block
-		this.currentNumTransactions = 0;
-		try (BufferedWriter writer = new BufferedWriter(new FileWriter(currentBlock, true))) {
-			writer.append(new String(hash) + "\n");
-			writer.append("blk_id"+ SEPARATOR + currentBlockId + "\n");
-			writer.append("n_trx"+ SEPARATOR +this.currentNumTransactions + "\n");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	
-	
-	public void updateNumberOfTransactions(File currentBlock, int numOfTransactions) {
-		StringBuilder sb = new StringBuilder();
-		String line = null;
-		int currentLine = 0;
-		
-		try (BufferedReader reader = new BufferedReader(new FileReader(currentBlock))) {
-			line = reader.readLine();
-			while (line != null) {
-				if (currentLine == N_TRANSACTIONS_LINE) {
-					sb.append("n_trx" + SEPARATOR + numOfTransactions + "\n");
-				}
-				else {
-					sb.append(line + "\n");
-				}
-				currentLine++;
-				line = reader.readLine();
+		if (currentBlockId > 1) {
+			try {
+				FileInputStream fis = new FileInputStream(currentBlock);
+				ObjectInputStream ois = new ObjectInputStream(fis);
+				block = (Bloco) ois.readObject();
+				ois.close();
+				fis.close();
+				
+				Signature s = Signature.getInstance("MD5withRSA");
+				SignedObject signedBlock = new SignedObject(block, this.privateKey, s);
+				
+				FileOutputStream fos = new FileOutputStream(currentBlock);
+				ObjectOutputStream oos = new ObjectOutputStream(fos);
+				oos.writeObject(signedBlock);
+				oos.close();
+				fos.close();
+				//Here the last block was sealed, lets get the hash
+				
+				//1st Serialise the object to byte array
+				ByteArrayOutputStream out = new ByteArrayOutputStream();
+			    ObjectOutputStream os = new ObjectOutputStream(out);
+			    os.writeObject(signedBlock);
+			    byte[] bytes = out.toByteArray();
+			    os.close();
+			    out.close();
+				
+				MessageDigest md = MessageDigest.getInstance("SHA-256");
+				hash = md.digest(bytes); //This will serve as the hash for the new block
+				this.currentNumTransactions = 0;
+			} catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException | IOException | ClassNotFoundException e) {
+				e.printStackTrace();
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 		
-		try (BufferedWriter writer = new BufferedWriter(new FileWriter(currentBlock))) {
-			writer.write(sb.toString());
+		currentBlock = new File(SERVER_FILES_BLOCKCHAIN + "/block_" + this.currentBlockId + ".blk");
+		block = new Bloco(hash, currentBlockId, 0);
+		try {
+			FileOutputStream fos = new FileOutputStream(currentBlock);
+			ObjectOutputStream oos = new ObjectOutputStream(fos);
+			oos.writeObject(block);
+			oos.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
+	public void updateNumberOfTransactions(File currentBlock, long numOfTransactions) {
+		Bloco toUpdate = null;
+		try {
+			FileInputStream fis = new FileInputStream(currentBlock);
+			ObjectInputStream ois = new ObjectInputStream(fis);
+			toUpdate = (Bloco) ois.readObject();
+			ois.close();
+		} catch (IOException | ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		try {
+			FileOutputStream fos = new FileOutputStream(currentBlock);
+			ObjectOutputStream oos = new ObjectOutputStream(fos);
+			toUpdate.setNumOfTransactions(numOfTransactions);
+			oos.writeObject(toUpdate);
+			oos.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 	
 	public boolean verifyIntegrityOfBlockchain() {
 		String[] blockchainFileNames = new File(SERVER_FILES_BLOCKCHAIN).list();
+		byte[] previousBlockHash = new byte[32];
 		
 		Arrays.sort(blockchainFileNames);
 		String lastBlockFileName = SERVER_FILES_BLOCKCHAIN + "/" + currentBlock.getName();
 		
-		byte[] calculatedHash = new byte[32];
 		for (String blockFileName : blockchainFileNames) {
-			MessageDigest md = null;
-			Signature s = null;
-		    blockFileName = SERVER_FILES_BLOCKCHAIN + "/" + blockFileName;
-			
+			blockFileName = SERVER_FILES_BLOCKCHAIN + "/" + blockFileName;
+			if (blockFileName.equals(lastBlockFileName)) {
+				return true;
+			}
 			try {
-				s = Signature.getInstance("MD5withRSA");
-				s.initVerify(this.publicKey);
-				md = MessageDigest.getInstance("SHA-256");
-				
-				String hashRead = null; 
-				String numTransactionsRead;
-				byte[] blockWithoutSignature = null; 
-				byte[] blockWithSignature = null;
-				StringBuilder signatureRead = new StringBuilder();
-				byte[] signToVerify = new byte[256];
-				
-				
-				try (BufferedReader reader = new BufferedReader(new FileReader(blockFileName))) {
-					hashRead = reader.readLine();// TODO:pode ter de ser readAllByes()
-					if (blockFileName.equals(lastBlockFileName)) {
-//						if (!MessageDigest.isEqual(calculatedHash, hashRead.getBytes())) {
-//							return false;
-//						}
-						break;
-					}
-					
-					String blockIdRead = reader.readLine();
-					numTransactionsRead = reader.readLine();
-					StringBuilder sb = new StringBuilder(hashRead + "\n" + blockIdRead +
-							"\n" + numTransactionsRead + "\n");
-					
-					String line = null;
-					int numCurrTransactions = 0;
-					
-					//Reading transactions lines
-					while (true) {
-						line = reader.readLine(); 
-						
-					 	if (numCurrTransactions == 5) {
-							 blockWithoutSignature = sb.toString().getBytes();
-							 String mySignature = line;
-							 mySignature = mySignature.substring(0, mySignature.length() - 1);
-							 String[] a = mySignature.split(" ");
-							 for (int i = 0; i < a.length; i++) {
-								 signToVerify[i] = (byte) Integer.parseInt(a[i]);
-							 }
-							 break;
-						}
-						else {
-						 	numCurrTransactions++; 
-						 	sb.append(line + "\n");
-						} 
-					}
-					
-					blockWithSignature = sb.toString().getBytes(); 
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				
-				s.update(blockWithoutSignature);
-				
-				//TODO
-				//Verificar, nao funciona a verificacao da assinatura
-//				if (!s.verify(signatureRead.toString().getBytes()) ||
-//						!MessageDigest.isEqual(calculatedHash, hashRead.getBytes())) {
-//					return false;
-//				}
-				if (!s.verify(signToVerify)) {
-					System.out.println("falha na assinatura");
+				FileInputStream fis = new FileInputStream(blockFileName);
+				ObjectInputStream ois = new ObjectInputStream(fis);
+				SignedObject toCheckSignature = (SignedObject) ois.readObject();
+				ois.close();
+				Signature s = Signature.getInstance("MD5withRSA");
+				Bloco savedObject = (Bloco) toCheckSignature.getObject();
+				if (!toCheckSignature.verify(this.publicKey, s) || 
+						!MessageDigest.isEqual(previousBlockHash, savedObject.getHash())) {
 					return false;
 				}
-				calculatedHash = md.digest(blockWithSignature);
 				
-			} catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+				//Update previousBlockHash
+				ByteArrayOutputStream out = new ByteArrayOutputStream();
+			    ObjectOutputStream os = new ObjectOutputStream(out);
+			    os.writeObject(toCheckSignature);
+			    byte[] bytes = out.toByteArray();
+			    os.close();
+			    out.close();
+				
+				MessageDigest md = MessageDigest.getInstance("SHA-256");
+				previousBlockHash = md.digest(bytes); //This will serve as the hash for the new block
+			} catch (IOException | ClassNotFoundException | NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
 				e.printStackTrace();
 			}
 		}
-		
 		return true;
 	}
-	
-	
 
 	public void setPrivateKey(PrivateKey privateKey) {
 		this.privateKey = privateKey;
