@@ -16,8 +16,10 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.io.ByteArrayOutputStream;
 import java.security.SignedObject;
+import java.util.ArrayList;
 
 public class Blockchain {
 	private static final String SERVER_FILES_BLOCKCHAIN = "serverFiles/blockchain";
@@ -27,6 +29,7 @@ public class Blockchain {
 	private long currentBlockId = 0;
 	private PrivateKey privateKey;
 	private PublicKey publicKey;
+	private List<String> transactions;
 
 	private Blockchain() {
 		//Find latest block
@@ -47,6 +50,7 @@ public class Blockchain {
 			String currBlockFileName = Collections.max(Arrays.asList(blockchainFolder.list()));
 			currentBlock = new File(SERVER_FILES_BLOCKCHAIN + "/" + currBlockFileName);
 		}
+		this.transactions = new ArrayList<>();
 	}
 	
 	
@@ -71,12 +75,12 @@ public class Blockchain {
 		}
 		this.currentNumTransactions++;
 		updateNumberOfTransactions(currentBlock, this.currentNumTransactions);
+		
 		if(currentNumTransactions == 5) {
 			createNewBlock();
 		}
+		this.transactions.add(transaction.toString());
 	}
-	
-	
 	
 	//@requires verifiyIntegrityOfBlockchain
 	public void load() {
@@ -87,6 +91,27 @@ public class Blockchain {
 			this.currentBlockId = block.getBlockId();
 			this.currentNumTransactions = block.getNumOfTransactions();
 			ois.close();
+			
+			File blockchainFolder = new File(SERVER_FILES_BLOCKCHAIN);
+			String[] blockchainFileNames = blockchainFolder.list();
+			Arrays.sort(blockchainFileNames);
+			
+			for(String blockFileName : blockchainFileNames) {
+				blockFileName = SERVER_FILES_BLOCKCHAIN + "/" + blockFileName;
+				fis = new FileInputStream(blockFileName);
+				ois = new ObjectInputStream(fis);
+				String fullName = SERVER_FILES_BLOCKCHAIN + "/" + currentBlock.getName();
+				if(blockFileName.equals(fullName)) {
+					block = (Bloco) ois.readObject();
+				}
+				else {
+					SignedObject toCheckSignature = (SignedObject) ois.readObject();
+					block = (Bloco) toCheckSignature.getObject();	
+				}
+				for (String transaction : block.getTransactions()) {
+					this.transactions.add(transaction);
+				}
+			}
 		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -227,6 +252,14 @@ public class Blockchain {
 		}
 		return true;
 	}
+	
+	public String listTransactions() {
+		StringBuilder sb = new StringBuilder();
+		for (String transaction : this.transactions) {
+			sb.append(transaction + "\n");
+		}
+		return sb.toString();
+	}
 
 	public void setPrivateKey(PrivateKey privateKey) {
 		this.privateKey = privateKey;
@@ -235,5 +268,7 @@ public class Blockchain {
 	public void setPublicKey(PublicKey publicKey) {
 		this.publicKey = publicKey;
 	}
+	
+	
 	
 }

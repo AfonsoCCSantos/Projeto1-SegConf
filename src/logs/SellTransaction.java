@@ -2,6 +2,9 @@ package logs;
 
 public class SellTransaction extends Transaction {
 
+
+	private static final long serialVersionUID = 1L;
+
 	public SellTransaction(String vinhoId, String unidades, String valor, String user) {
 		super(vinhoId, unidades, valor, user);
 	}

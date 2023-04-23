@@ -18,10 +18,16 @@ import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.SignedObject;
+import logs.SellTransaction;
+import logs.BuyTransaction;
+
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+
+import Catalogos.CatalogoDeVinhos;
 
 
 /**
@@ -38,7 +44,8 @@ public class TintolStub {
     private ObjectOutputStream out;
     private ObjectInputStream in;
     private KeyStore keyStore;
-    private Key privateKey;
+    private PrivateKey privateKey;
+    private String userId;
     
     public TintolStub(String ip, int port, String keyStoreFileName, String keyStorePassWord) {
         this.socket = connectToServer(ip,port);
@@ -47,7 +54,7 @@ public class TintolStub {
         try {
 			this.keyStore = KeyStore.getInstance(new File("userFiles/" + keyStoreFileName), keyStorePassWord.toCharArray());
 	        String alias = this.keyStore.aliases().nextElement();
-	        this.privateKey = this.keyStore.getKey(alias, keyStorePassWord.toCharArray());
+	        this.privateKey = (PrivateKey) this.keyStore.getKey(alias, keyStorePassWord.toCharArray());
 		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException | UnrecoverableKeyException e) {
 			e.printStackTrace();
 		}
@@ -68,6 +75,7 @@ public class TintolStub {
     public boolean login(String userId) {
     	boolean res = false;
         boolean iExist = false;
+        this.userId = userId;
         String loginMessage = null;
         Long nonce = 0L;
         try {
@@ -76,7 +84,7 @@ public class TintolStub {
             iExist = (boolean) this.in.readObject();
             
         	Signature s = Signature.getInstance("MD5withRSA");
-        	s.initSign((PrivateKey) this.privateKey);
+        	s.initSign(this.privateKey);
         	s.update(nonce.byteValue());
         	byte[] signedNonce = s.sign();
             if (iExist) {
@@ -167,7 +175,7 @@ public class TintolStub {
             System.out.println(INVALID_FORMAT);
             return;
         }
-
+        
         if(!ValidationLib.verifyString(tokens[1])) {
         	System.out.println("The name of the wine is not valid.");
             return;
@@ -182,8 +190,20 @@ public class TintolStub {
             System.out.println("The quantity of the wine needs to be an integer.");
             return;
         }
-
-        String res = sendReceive(tokens);
+        
+        String res = null;
+		try {
+			Signature signature = Signature.getInstance("MD5withRSA");
+			SellTransaction sellTransaction = new SellTransaction(tokens[1], tokens[3], tokens[2], this.userId);
+	        SignedObject transactionToSend = new SignedObject(sellTransaction, this.privateKey, signature);
+	        this.out.writeObject("sell");
+	        this.out.writeObject(transactionToSend);
+            res = (String) this.in.readObject();
+		} catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException | IOException | ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+        
+//        String res = sendReceive(tokens);
         //If everything went ok then the server will answer with a success message, otherwise, the error message.
         System.out.println(res);
         System.out.println();
@@ -261,8 +281,30 @@ public class TintolStub {
             System.out.println("The quantity of the wine needs to be an integer.");
             return;
         }
+        
+        String res = null;
+		try {
+			Signature signature = Signature.getInstance("MD5withRSA");
+			
+	        this.out.writeObject("buy");
+	        //buy vinho seller qtd
+	        this.out.writeObject(tokens[1]); //send wine name
+	        this.out.writeObject(tokens[2]); //send seller name
+	        this.out.writeObject(tokens[3]); //send quantity
+	        this.out.writeObject(this.userId); //send user name
+	        String winePrice = (String) this.in.readObject();
+	        
+	        if (!winePrice.equals("-1")) {
+	        	BuyTransaction buyTransaction = new BuyTransaction(tokens[1],  tokens[3], winePrice,this.userId);
+		        SignedObject transactionToSend = new SignedObject(buyTransaction, this.privateKey, signature);
+		        this.out.writeObject(transactionToSend);
+            }
+            res = (String) this.in.readObject();
+		} catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException | IOException | ClassNotFoundException e) {
+			e.printStackTrace();
+		}
 
-        String res = sendReceive(tokens);
+        //String res = sendReceive(tokens);
         //If everything went ok then the server will answer with a success message, otherwise, the error message.
         System.out.println(res);
         System.out.println();
@@ -332,6 +374,17 @@ public class TintolStub {
         //it will say that there are no messages.
         System.out.println(res);
         System.out.println();
+    }
+    
+    public void list() {
+    	String res = "";
+    	try {
+            this.out.writeObject("list");
+            res = (String) this.in.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    	System.out.println(res);
     }
 
     private String sendReceive(String[] tokens) {

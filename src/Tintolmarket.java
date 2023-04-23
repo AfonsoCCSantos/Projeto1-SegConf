@@ -86,6 +86,10 @@ public class Tintolmarket {
                     case "read":
                         stub.read();
                         break;
+                    case "l":
+                    case "list":
+                    	stub.list();
+                    	break;
                     default:
                     	System.out.println("Invalid command");
                 }

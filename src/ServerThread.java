@@ -1,6 +1,8 @@
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.security.Key;
+import java.security.SignedObject;
 
 import javax.crypto.SecretKey;
 
@@ -58,13 +60,15 @@ public class ServerThread extends Thread {
         			skel.addWine(tokens[1], "serverFiles/images/"+tokens[1]+"_server." + tokens[2]);
         			break;
         		case "sell":
-        		case "s":
-        			if (tokens.length != 4 || !ValidationLib.verifyString(tokens[1]) ||
-        				!ValidationLib.isValidNumber(tokens[2]) || !ValidationLib.isIntegerNumber(tokens[3])) {
-        				closeConnection();
-            			return;
-        			}
-        			skel.sellWine(user, tokens[1], tokens[2], tokens[3]);
+//        			if (tokens.length != 4 || !ValidationLib.verifyString(tokens[1]) ||
+//        				!ValidationLib.isValidNumber(tokens[2]) || !ValidationLib.isIntegerNumber(tokens[3])) {
+//        				closeConnection();
+//            			return;
+//        			}
+//        			skel.sellWine(user, tokens[1], tokens[2], tokens[3]);
+					SignedObject sellTransaction = null;
+					sellTransaction = (SignedObject) skel.getTransaction();
+        			skel.sellWine(sellTransaction);
         			break;
         		case "view":
         		case "v":
@@ -75,13 +79,7 @@ public class ServerThread extends Thread {
         			skel.view(tokens[1]);
         			break;
         		case "buy":
-        		case "b":
-        			if (tokens.length != 4 || !ValidationLib.verifyString(tokens[1])
-        								   || !ValidationLib.isIntegerNumber(tokens[3])) {
-        				closeConnection();
-            			return;
-        			}
-        			skel.buy(user,tokens[1],tokens[2],tokens[3]);
+        			skel.buy();
         			break;
         		case "wallet":
         		case "w":
@@ -113,6 +111,9 @@ public class ServerThread extends Thread {
         		case "r":
              		skel.read(user);
         			break;
+        		case "list":
+        			skel.list();
+        			break;	
         		default:
         			closeConnection();
         			return;

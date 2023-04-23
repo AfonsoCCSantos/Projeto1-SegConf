@@ -21,6 +21,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.SignedObject;
 import java.util.Random;
 
 import javax.crypto.SecretKey;
@@ -58,6 +59,7 @@ public class TintolSkel {
 	private SecretKey passwordKey;
 	private Random rd;
     private Key privateKey;
+    private PublicKey currentUserPublicKey;
 
     public TintolSkel(Socket inSocket, SecretKey passwordKey, Key privateKey) {
         this.in = Utils.gInputStream(inSocket);
@@ -116,6 +118,7 @@ public class TintolSkel {
 				s.initVerify(userPublicKey);
 				s.update(nonce.byteValue());
 				if(s.verify(signedNonce)) {
+                    this.currentUserPublicKey = userPublicKey;
 	                out.writeObject(SUCCESS_LOGIN_MESSAGE);
 					out.writeObject(true);
 	                return user;
@@ -153,6 +156,7 @@ public class TintolSkel {
 	        		os.close();	
 	        		this.catUsers.registerUser(user,certificateFileName);
 	        		this.catSaldos.registerUser(user);
+	        		this.currentUserPublicKey = receivedCertificate.getPublicKey();
 	        		out.writeObject(SUCCESS_LOGIN_MESSAGE);
 	        		out.writeObject(true);
 	        		return user;
@@ -204,8 +208,35 @@ public class TintolSkel {
 		}
     }
 
-    public void sellWine(String user, String wine, String value, String quantity) {
-
+//    public void sellWine(String user, String wine, String value, String quantity) {
+    public void sellWine(SignedObject sellTransactionSigned) {
+        
+        SellTransaction sell = null;
+        String user = null;
+        String wine = null;
+        String value = null;
+        String quantity = null;
+        
+        if (verifyTransactionsSignature(sellTransactionSigned))  {
+            try {
+				sell = (SellTransaction) sellTransactionSigned.getObject();
+				user = sell.getUser();
+				wine = sell.getVinhoId();
+				value = sell.getValor();
+				quantity = sell.getUnidades();
+			} catch (ClassNotFoundException | IOException e) {
+				e.printStackTrace();
+			}
+        }
+        else {
+        	try {
+				out.writeObject("Signature not verified.");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    		return;
+        }
+        
     	synchronized (this.catWines) {
     		if (!this.catWines.wineExists(wine)) {
         		try {
@@ -226,9 +257,9 @@ public class TintolSkel {
         }
         
         synchronized (this.blockchain) {
-        	this.blockchain.writeTransaction(new SellTransaction(wine, quantity, value, user));
+        	this.blockchain.writeTransaction(sell);
 		}
-
+        
         try {
 			out.writeObject("This wine is now for sell.");
 		} catch (IOException e) {
@@ -288,10 +319,16 @@ public class TintolSkel {
 		}
     }
 
-    public void buy(String user, String wine, String seller, String quantity) {
+    public void buy() {
+        String wine = getLine();
+		String seller = getLine();
+		String quantity = getLine();
+		String user = getLine();
+        
     	//1. Verificar se o vinho existe
 		if (!this.catWines.wineExists(wine)) {
     		try {
+                out.writeObject("-1");
 				out.writeObject("This wine does not exist.");
 				return;
 			} catch (IOException e) {
@@ -300,10 +337,11 @@ public class TintolSkel {
     	}
 
 		double winePrice = 0;
-
+		
 		synchronized(this.catVendas){
 	    	if (!this.catVendas.userSellsWine(seller, wine)) {
 	    		try {
+                    out.writeObject("-1");
 					out.writeObject("The given user is not selling this wine");
 					return;
 				} catch (IOException e) {
@@ -313,7 +351,20 @@ public class TintolSkel {
 	    	//2.Obter o valor que o user ira pagar ao comprar estas unidades do dado vinho
 	    	winePrice = this.catVendas.getWinePrice(wine,seller) * Integer.parseInt(quantity);
         }
-
+        
+       try {
+    	   this.out.writeObject(Double.toString(winePrice));
+       } catch (IOException e) {
+    	   e.printStackTrace();
+       } 
+       
+       SignedObject signedTransaction = null;
+       try {
+    	   signedTransaction = (SignedObject) this.in.readObject();
+       } catch (ClassNotFoundException | IOException e) {
+			e.printStackTrace();
+       }
+       
     	//3.Verificar se ha quantidades suficientes do vinho
     	synchronized (this.catWines) {
     		if (!this.catWines.hasEnoughQuantity(wine, Integer.parseInt(quantity))) {
@@ -342,6 +393,24 @@ public class TintolSkel {
 				}
             }
         }
+    	
+ 		BuyTransaction buy = null;
+ 		 if (verifyTransactionsSignature(signedTransaction))  {
+            try {
+				buy = (BuyTransaction) signedTransaction.getObject();
+			} catch (ClassNotFoundException | IOException e) {
+				e.printStackTrace();
+			}
+        }
+        else {
+        	try {
+				out.writeObject("Signature not verified.");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    		return;
+        }
+    	
 
         //5. tirar a sell ou a quantidade de vinho comparada da sell
         synchronized(this.catVendas){
@@ -354,7 +423,7 @@ public class TintolSkel {
     	}
     	
     	 synchronized (this.blockchain) {
-         	this.blockchain.writeTransaction(new BuyTransaction(wine, quantity, String.valueOf(winePrice), user));
+         	this.blockchain.writeTransaction(buy);
  		}
 
     	try {
@@ -433,5 +502,34 @@ public class TintolSkel {
         }
         return line;
     }
-
+    
+    
+    private boolean verifyTransactionsSignature(SignedObject transactionSigned) {
+       Signature signature;
+       boolean res = false;
+	   try {
+		   signature =  Signature.getInstance("MD5withRSA");
+		   res = transactionSigned.verify(this.currentUserPublicKey, signature);
+	   } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+		   e.printStackTrace();
+	   }	
+       return res;
+    } 
+    
+    public SignedObject getTransaction() {
+        SignedObject transaction = null;
+        try {
+            transaction = (SignedObject) in.readObject();
+        } catch(IOException | ClassNotFoundException e) {
+        }
+        return transaction;
+    }
+    
+    public void list() {
+        try {
+	        this.out.writeObject(this.blockchain.listTransactions());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    }
 }
