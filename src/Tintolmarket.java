@@ -121,6 +121,7 @@ public class Tintolmarket {
         System.out.println("classify <wine> <stars>");
         System.out.println("talk <user> <message>");
         System.out.println("read");
+        System.out.println("list");
         System.out.println();
     }
 

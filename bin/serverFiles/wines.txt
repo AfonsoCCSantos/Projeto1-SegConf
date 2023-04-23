@@ -1,1 +1,0 @@
-vinho1:serverFiles/images/vinho1_server.jpg:0:0:10
