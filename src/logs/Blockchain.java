@@ -125,21 +125,6 @@ public class Blockchain {
 		return INSTANCE;
 	}
 	
-	public String readAllLines(BufferedReader reader){
-		String lineRead = null;
-		StringBuilder sb = new StringBuilder();
-		try {
-			lineRead = reader.readLine();
-			while(lineRead != null){
-				sb.append(lineRead + "\n");
-				lineRead = reader.readLine();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return sb.toString();
-	}
-	
 	public void createNewBlock() {
 		byte[] hash = new byte[32];
 		Bloco block = null;
@@ -221,16 +206,20 @@ public class Blockchain {
 		
 		for (String blockFileName : blockchainFileNames) {
 			blockFileName = SERVER_FILES_BLOCKCHAIN + "/" + blockFileName;
-			if (blockFileName.equals(lastBlockFileName)) {
-				return true;
-			}
 			try {
 				FileInputStream fis = new FileInputStream(blockFileName);
 				ObjectInputStream ois = new ObjectInputStream(fis);
+				if (blockFileName.equals(lastBlockFileName)) {
+					Bloco block = (Bloco) ois.readObject();
+					ois.close();
+					fis.close();
+					return MessageDigest.isEqual(previousBlockHash, block.getHash());
+				}
 				SignedObject toCheckSignature = (SignedObject) ois.readObject();
 				ois.close();
 				Signature s = Signature.getInstance("MD5withRSA");
 				Bloco savedObject = (Bloco) toCheckSignature.getObject();
+				
 				if (!toCheckSignature.verify(this.publicKey, s) || 
 						!MessageDigest.isEqual(previousBlockHash, savedObject.getHash())) {
 					return false;
