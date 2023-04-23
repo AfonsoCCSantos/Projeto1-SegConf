@@ -132,7 +132,10 @@ public class Blockchain {
 			String signatureLine = new String(blockSignature) + "\n";
 			allLines.append(signatureLine);
 			try (BufferedWriter writer = new BufferedWriter(new FileWriter(currentBlock, true))){
-				writer.append(signatureLine); //escrever assinatura			
+				for (byte b: blockSignature) {
+					writer.append(b+" ");
+				}
+//				writer.append(signatureLine); //escrever assinatura			
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -214,6 +217,8 @@ public class Blockchain {
 				byte[] blockWithoutSignature = null; 
 				byte[] blockWithSignature = null;
 				StringBuilder signatureRead = new StringBuilder();
+				byte[] signToVerify = new byte[256];
+				
 				
 				try (BufferedReader reader = new BufferedReader(new FileReader(blockFileName))) {
 					hashRead = reader.readLine();// TODO:pode ter de ser readAllByes()
@@ -238,12 +243,12 @@ public class Blockchain {
 						
 					 	if (numCurrTransactions == 5) {
 							 blockWithoutSignature = sb.toString().getBytes();
-							 while(line != null) {
-								 signatureRead.append(line + "\n");
-								 line = reader.readLine();
+							 String mySignature = line;
+							 mySignature = mySignature.substring(0, mySignature.length() - 1);
+							 String[] a = mySignature.split(" ");
+							 for (int i = 0; i < a.length; i++) {
+								 signToVerify[i] = (byte) Integer.parseInt(a[i]);
 							 }
-							 signatureRead.deleteCharAt(signatureRead.length()-1);
-							 sb.append(signatureRead.toString() + "\n");
 							 break;
 						}
 						else {
@@ -265,6 +270,10 @@ public class Blockchain {
 //						!MessageDigest.isEqual(calculatedHash, hashRead.getBytes())) {
 //					return false;
 //				}
+				if (!s.verify(signToVerify)) {
+					System.out.println("falha na assinatura");
+					return false;
+				}
 				calculatedHash = md.digest(blockWithSignature);
 				
 			} catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
