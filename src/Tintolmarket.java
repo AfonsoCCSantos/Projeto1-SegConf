@@ -15,6 +15,7 @@ public class Tintolmarket {
 	private static final String TRUSTSTORE_PASSWORD = "password";
 	
     public static void main(String[] args) {
+    	System.out.println("a");
     	Scanner inputReader = new Scanner(System.in);
         if (args.length < 5) {
             System.err.println("Not enough arguments.");

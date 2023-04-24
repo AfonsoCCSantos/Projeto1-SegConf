@@ -8,6 +8,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.UnrecoverableKeyException;
 import java.security.spec.InvalidKeySpecException;
+import java.io.FileInputStream;
 
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
@@ -105,13 +106,15 @@ public class TintolmarketServer {
 				System.exit(-1);
 			}
 		}
-    	
     	//Get privateKey
     	KeyStore keyStore = null;
     	PrivateKey privateKey = null;
     	PublicKey publicKey = null;
     	try {
-			keyStore = KeyStore.getInstance(new File("serverFiles/" + keyStoreFileName), keyStorePassword.toCharArray());
+    		FileInputStream kfile = new FileInputStream("serverFiles/" + keyStoreFileName);
+    		keyStore = KeyStore.getInstance("JKS");
+    		keyStore.load(kfile, "password".toCharArray());
+//			keyStore = KeyStore.getInstance(new File("serverFiles/" + keyStoreFileName), keyStorePassword.toCharArray());
 			String alias = keyStore.aliases().nextElement();
 	       privateKey = (PrivateKey) keyStore.getKey(alias, keyStorePassword.toCharArray());
 	       publicKey = keyStore.getCertificate(alias).getPublicKey();

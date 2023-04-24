@@ -52,7 +52,9 @@ public class TintolStub {
         this.out = Utils.gOutputStream(socket);
         this.in = Utils.gInputStream(socket);
         try {
-			this.keyStore = KeyStore.getInstance(new File("userFiles/" + keyStoreFileName), keyStorePassWord.toCharArray());
+			FileInputStream kfile = new FileInputStream("userFiles/" + keyStoreFileName);
+			this.keyStore = KeyStore.getInstance("JKS");
+			this.keyStore.load(kfile, "password".toCharArray());
 	        String alias = this.keyStore.aliases().nextElement();
 	        this.privateKey = (PrivateKey) this.keyStore.getKey(alias, keyStorePassWord.toCharArray());
 		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException | UnrecoverableKeyException e) {
