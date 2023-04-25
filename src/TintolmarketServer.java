@@ -1,6 +1,11 @@
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -9,7 +14,11 @@ import java.security.PublicKey;
 import java.security.UnrecoverableKeyException;
 import java.security.spec.InvalidKeySpecException;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
 
+
+import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -39,6 +48,7 @@ public class TintolmarketServer {
 	private static final String SERVER_DIR_BLOCKCHAIN = SERVER_DIR + "/" + "blockchain";
 	private static final String FAILED_INTEGRITY_VERIFICATION_ERROR_MSG = 
 			"Failed to verify the integrity of the blockchain";
+	private static PrivateKey privateKey;
 	
     public static void main(String[] args) {
 		if(args.length < 3) {
@@ -60,7 +70,7 @@ public class TintolmarketServer {
 			keystoreFileName = args[1];
 			keyStorePassword = args[2];
 		}
-
+		
 		SecretKey passwordKey = getPasswordKey(passwordCipher);
 		System.setProperty("javax.net.ssl.keyStore", SERVER_DIR+"/" + keystoreFileName);
         System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
@@ -106,15 +116,15 @@ public class TintolmarketServer {
 				System.exit(-1);
 			}
 		}
+		
     	//Get privateKey
     	KeyStore keyStore = null;
-    	PrivateKey privateKey = null;
+    	//PrivateKey privateKey = null;
     	PublicKey publicKey = null;
     	try {
     		FileInputStream kfile = new FileInputStream("serverFiles/" + keyStoreFileName);
     		keyStore = KeyStore.getInstance("JKS");
     		keyStore.load(kfile, "password".toCharArray());
-//			keyStore = KeyStore.getInstance(new File("serverFiles/" + keyStoreFileName), keyStorePassword.toCharArray());
 			String alias = keyStore.aliases().nextElement();
 	       privateKey = (PrivateKey) keyStore.getKey(alias, keyStorePassword.toCharArray());
 	       publicKey = keyStore.getCertificate(alias).getPublicKey();
@@ -133,6 +143,32 @@ public class TintolmarketServer {
         Blockchain bc = Blockchain.getInstance();
         bc.setPrivateKey(privateKey);
         bc.setPublicKey(publicKey);
+        
+        //At this point all the server files have been created
+        
+        File hmac = new File("hmac.txt");
+        	
+        try {
+			boolean created = hmac.createNewFile();
+			if (created) {
+				byte[] fileWines = Files.readAllBytes(Paths.get("serverFiles/wines.txt"));
+				Mac mac = Mac.getInstance("HmacSHA256");
+				mac.init(privateKey);
+				FileOutputStream fos = new FileOutputStream(hmac);
+				ObjectOutputStream oos = new ObjectOutputStream(fos);
+				mac.update(fileWines);
+				oos.write(mac.doFinal());
+				oos.close();
+				fos.close();
+			}
+		} catch (IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+			e.printStackTrace();
+		}
+        
+        
+        
+        
+        
         
         if(!bc.verifyIntegrityOfBlockchain()) {
         	System.out.println(FAILED_INTEGRITY_VERIFICATION_ERROR_MSG);
