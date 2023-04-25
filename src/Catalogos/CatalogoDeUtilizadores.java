@@ -8,6 +8,11 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.FileInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -27,14 +32,15 @@ import java.util.Set;
  */
 public class CatalogoDeUtilizadores extends Catalogo {
 	private static CatalogoDeUtilizadores INSTANCE = null;
-	private static final String USERS_FILE = "serverFiles/users.txt";
+	private static final String USERS_FILE = "serverFiles/users.cif";
 	private File users;
 	private Map<String, String> registeredUsers;
+	private SecretKey secretKey;
 
 	private CatalogoDeUtilizadores() {
 		users = new File(USERS_FILE);
 		registeredUsers = new HashMap<>();
-
+		
 		try {
 			users.createNewFile();
 		} catch (IOException e) {
@@ -50,106 +56,69 @@ public class CatalogoDeUtilizadores extends Catalogo {
 	}
 	
 	public void registerUser(String user, String certificateFileName) {
-		try (BufferedWriter writer = new BufferedWriter(new FileWriter(users, true))){
-			writer.append(user + SEPARATOR + certificateFileName + "\n");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		registeredUsers.put(user, certificateFileName);
-	}
-	
-	public boolean loginUser(String user, String password, SecretKey passwordKey) {
-		BufferedReader reader = null;
-		BufferedWriter writer = null;
+		String toEncrypt = user + SEPARATOR + certificateFileName + "\n";
+		byte[] data = null;
+		byte[] dataParams = null;
+		byte[] decryptedData = null;
+		byte[] newParams = null;
+		byte[] encryptedBytes = null;
 		
-		try {
-			reader = new BufferedReader(new FileReader(users));
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-
-		boolean res = false;
-		try {
-			if (userExists(user)) {
-				res = this.registeredUsers.get(user).equals(password);
+		//Read the data that was previously on the file
+		data = getFileData(users);
+		
+		if (data.length > 0) { //time to decrypt
+			//Get the parameters
+			dataParams = getFileData(new File("serverFiles/params.txt"));
+			//Now decrypt the data
+			decryptedData = decryptData(dataParams, data);
+			
+			//At this point, the contents of the users files are decrypted
+			
+			//Lets merge the previous contents of the file with this new line
+			byte[] toEncryptBytes = toEncrypt.getBytes();
+			byte[] mergedContents = new byte[decryptedData.length + toEncryptBytes.length];
+			int offset = 0;
+			for (int i = 0; i < decryptedData.length; i++) {
+				mergedContents[offset] = decryptedData[i];
+				offset++;
 			}
-			else {
-				writer = new BufferedWriter(new FileWriter(users, true));
-				writer.append(user + SEPARATOR + password + "\n");
-				writer.close();
-				res = true;
-				registeredUsers.put(user, password);
+			for (int i = 0; i < toEncryptBytes.length; i++) {
+				mergedContents[offset] = toEncryptBytes[i];
+				offset++;
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
+			
+			//At this point, I have all the content of the file in a new byte[], ready to be encrypted and write
+			try {
+				Cipher c = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
+				c.init(Cipher.ENCRYPT_MODE, secretKey);
+				encryptedBytes = c.doFinal(mergedContents);
+				newParams = c.getParameters().getEncoded();
+			} catch (NoSuchAlgorithmException | IOException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+				e.printStackTrace();
+			}
+			
+			//Now, just write the new encrypted contents to the file
+			writeToFile(encryptedBytes, users);
+			//And write the new params to a file as well
+			writeToFile(newParams, new File("serverFiles/params.txt"));
 		}
-		return res;
-//		BufferedReader reader = null;
-//		BufferedWriter writer = null;
-//
-//		Cipher encryptCipher = null;
-//		Cipher decryptCipher = null;
-//		byte[] params = null;
-//		try {
-//			encryptCipher = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
-//			encryptCipher.init(Cipher.ENCRYPT_MODE, passwordKey);
-//			params = encryptCipher.getParameters().getEncoded();
-//			AlgorithmParameters p = AlgorithmParameters.getInstance("PBEWithHmacSHA256AndAES_128");
-//			p.init(params);
-//			decryptCipher = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
-//			decryptCipher.init(Cipher.DECRYPT_MODE, passwordKey, p);
-//		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException e) {
-//			throw new RuntimeException(e);
-//		} catch (IOException e) {
-//			throw new RuntimeException(e);
-//		} catch (InvalidAlgorithmParameterException e) {
-//			throw new RuntimeException(e);
-//		}
-//		
-//		try {
-//			reader = new BufferedReader(new FileReader(users));
-//		} catch (FileNotFoundException e) {
-//			e.printStackTrace();
-//		}
-//
-//		boolean res = false;
-//		try {
-//			String line = reader.readLine();
-//			byte[] encryptedLine;
-//			String decryptedLine = null;
-//			while (line != null) {
-//				System.out.println(line);
-//				encryptedLine = line.getBytes();
-//				decryptedLine = new String(decryptCipher.doFinal(encryptedLine));
-//				if (decryptedLine.split(SEPARATOR)[0].equals(user)) {
-//					break;
-//				}
-//				line = reader.readLine();
-//			}
-//			reader.close();
-//			
-//			//User doesn't exist
-//			if (decryptedLine == null) {
-//				writer = new BufferedWriter(new FileWriter(users, true));
-//				byte[] toEncrypt = (user + SEPARATOR + password).getBytes();
-//				byte[] encryptedToWrite = encryptCipher.doFinal(toEncrypt);
-//				System.out.println(new String(encryptedToWrite) + "\n");
-//				writer.append(new String(encryptedToWrite) + "\n");
-//				writer.close();
-//				res = true;
-//				registeredUsers.add(user);
-//			}
-//			else {
-//				res = decryptedLine.split(SEPARATOR)[1].equals(password);
-//			}
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		} catch (IllegalBlockSizeException e) {
-//			throw new RuntimeException(e);
-//		} catch (BadPaddingException e) {
-//			throw new RuntimeException(e);
-//		}
-//		return res;
+		else { //There is nothing on the users file, just encrypt this data and write
+			try {
+				Cipher c = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
+				c.init(Cipher.ENCRYPT_MODE, secretKey);
+				encryptedBytes = c.doFinal(toEncrypt.getBytes());
+				newParams = c.getParameters().getEncoded();
+			} catch (NoSuchAlgorithmException | IOException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+				e.printStackTrace();
+			}
+			
+			//Now, just write the new encrypted contents to the file
+			writeToFile(encryptedBytes, users);
+			
+			//And write the new params to a file as well
+			writeToFile(newParams, new File("serverFiles/params.txt"));
+		}		
+		registeredUsers.put(user, certificateFileName);
 	}
 	
 	public boolean userExists(String user) {
@@ -162,19 +131,74 @@ public class CatalogoDeUtilizadores extends Catalogo {
 
 	@Override
 	public void load() {
-		//TODO:decrypt
-		try (BufferedReader reader = new BufferedReader(new FileReader(users))) {
-			String line = reader.readLine();
-			String[] tokens = null;
-			while (line != null) {
-				tokens = line.split(SEPARATOR);
+		//First, get all the content of the users file
+		byte[] data = null;
+		byte[] dataParams = null;
+		byte[] decryptedData = null;
+		
+		data = getFileData(users);
+		
+		if (data.length > 0) { //decrypt!
+			//Get the parameters
+			dataParams = getFileData(new File("serverFiles/params.txt"));
+			//decrypt the data
+			decryptedData = decryptData(dataParams, data);
+			
+			System.out.println(new String(decryptedData));
+			String[] lines = new String(decryptedData).split("\n");
+			for (String line : lines) {
+				String[] tokens = line.split(SEPARATOR);
 				registeredUsers.put(tokens[0],tokens[1]);
-				line = reader.readLine();
 			}
-		} catch (FileNotFoundException e1) {
-			e1.printStackTrace();
-		} catch (IOException e1) {
-			e1.printStackTrace();
 		}
+	}
+	
+	private byte[] decryptData(byte[] params, byte[] toDecrypt) {
+		byte[] decrypted = null;
+		try {
+			AlgorithmParameters p = AlgorithmParameters.getInstance("PBEWithHmacSHA256AndAES_128");
+			p.init(params);
+			Cipher d = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
+			d.init(Cipher.DECRYPT_MODE, secretKey, p);
+			decrypted = d.doFinal(toDecrypt);
+		} catch (NoSuchAlgorithmException | IOException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
+			e.printStackTrace();
+		}
+		return decrypted;
+	}
+	
+	private void writeToFile(byte[] data, File file) {
+		try (FileOutputStream fos = new FileOutputStream(file)) {
+			fos.write(data);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private byte[] getFileData(File file) {
+		byte[] data = null;
+		try {
+			FileInputStream fis = new FileInputStream(file);
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			byte[] buffer = new byte[16];
+			int bytesRead;
+			while ((bytesRead = fis.read(buffer)) != -1) {
+				bos.write(buffer, 0, bytesRead);
+			}
+			fis.close();
+			bos.close();
+			data = bos.toByteArray();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return data;
+	}
+
+	public SecretKey getSecretKey() {
+		return secretKey;
+	}
+
+	public void setSecretKey(SecretKey secretKey) {
+		this.secretKey = secretKey;
 	}
 }

@@ -123,11 +123,18 @@ public class TintolmarketServer {
 			e.printStackTrace();
 		}
     	
+    	File params = new File("serverFiles/params.txt");
+    	try {
+			params.createNewFile();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
         SSLServerSocket serverSocket = initSocket(port);
         CatalogoDeMensagens.getInstance().load();
         CatalogoDeVinhos.getInstance().load();
         CatalogoVendas.getInstance().load();
+        CatalogoDeUtilizadores.getInstance().setSecretKey(passwordKey);
         CatalogoDeUtilizadores.getInstance().load();
         CatalogoDeSaldos.getInstance().load();
         Blockchain bc = Blockchain.getInstance();

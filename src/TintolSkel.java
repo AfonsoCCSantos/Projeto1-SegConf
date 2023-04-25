@@ -74,7 +74,6 @@ public class TintolSkel {
 		this.rd = new Random();
 		this.passwordKey = passwordKey;
 		this.privateKey = privateKey;
-   		
     }
 
     public String loginUser() {
