@@ -60,6 +60,8 @@ public class CatalogoVendas extends Catalogo {
 	}
 
 	public void sellWine(String wine, String user, String value, String quantity) {
+		hmac.confirmHmac();
+		
 		String newRow = null;
 
 		try(BufferedWriter writer = new BufferedWriter(new FileWriter(sells,true))) {
@@ -68,6 +70,8 @@ public class CatalogoVendas extends Catalogo {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		hmac.writeHmac();
 
 		if (!sellsMap.containsKey(wine)) {
 			sellsMap.put(wine, new ArrayList<WineSell>());
@@ -111,6 +115,8 @@ public class CatalogoVendas extends Catalogo {
 
 
 	public void removeQuantityFromSell(String wine, String seller, String quantity) {
+		hmac.confirmHmac();
+		
 		List<WineSell> sellsList = this.sellsMap.get(wine);
 		WineSell targetSell = null;
 		for (WineSell s : sellsList){
@@ -131,11 +137,15 @@ public class CatalogoVendas extends Catalogo {
 			String toReplace = targetSell.getLine();
 			changeLine(targetLine, toReplace, sells);
 		}
+		
+		hmac.writeHmac();
 	}
 
 
 	@Override
 	public void load() {
+		hmac.confirmHmac();
+		
 		try (BufferedReader reader = new BufferedReader(new FileReader(sells))) {
 			String line = reader.readLine();
 			String[] tokens = null;

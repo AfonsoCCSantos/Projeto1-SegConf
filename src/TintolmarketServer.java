@@ -23,6 +23,7 @@ import Catalogos.CatalogoDeUtilizadores;
 import Catalogos.CatalogoDeVinhos;
 import Catalogos.CatalogoVendas;
 import logs.Blockchain;
+import logs.Hmac;
 
 
 /**
@@ -125,6 +126,10 @@ public class TintolmarketServer {
     	
 
         SSLServerSocket serverSocket = initSocket(port);
+        
+        Hmac hmac = Hmac.getInstance();
+        hmac.setKey(passwordKey);
+        
         CatalogoDeMensagens.getInstance().load();
         CatalogoDeVinhos.getInstance().load();
         CatalogoVendas.getInstance().load();

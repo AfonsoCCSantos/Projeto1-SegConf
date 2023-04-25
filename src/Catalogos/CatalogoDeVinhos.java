@@ -24,6 +24,7 @@ public class CatalogoDeVinhos extends Catalogo {
 	private static final String WINE_FILE = "serverFiles/wines.txt";
 	private static File wines;
 	private Map<String, Wine> winesMap;
+	
 
 	private CatalogoDeVinhos() {
 		wines = new File(WINE_FILE);
@@ -50,7 +51,7 @@ public class CatalogoDeVinhos extends Catalogo {
 	public boolean registerWine(String wine, String imagePath) {
 		if (wineExists(wine)) return false;
 		String wineRow = null;
-
+		this.hmac.confirmHmac();
 		try {
 			BufferedWriter writer = null;
 			writer = new BufferedWriter(new FileWriter(wines, true));
@@ -60,16 +61,19 @@ public class CatalogoDeVinhos extends Catalogo {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		this.hmac.writeHmac();
 		winesMap.put(wine, new Wine(wineRow));
 		return true;
 	}
 
 	public void classifyWine(String wineName, int stars) {
+		hmac.confirmHmac();
 		Wine wine = winesMap.get(wineName);
 		String targetLine = wine.getLine();
 		wine.classify(stars);
 		String toReplace = wine.getLine();
 		changeLine(targetLine,toReplace, wines);
+		hmac.writeHmac();
 	}
 
 	public boolean wineExists(String wine) {
@@ -98,6 +102,7 @@ public class CatalogoDeVinhos extends Catalogo {
 		int newQuantity = 0;
 		StringBuilder sb = new StringBuilder();
 
+		hmac.confirmHmac();
 		try (BufferedReader reader = new BufferedReader(new FileReader(wines))){
 			line = reader.readLine();
 			String[] tokens = null;
@@ -122,12 +127,15 @@ public class CatalogoDeVinhos extends Catalogo {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		hmac.writeHmac();
 
 		this.winesMap.get(wine).updateUnits(quantity);
 	}
 
 	@Override
 	public void load() {
+		hmac.confirmHmac();
 		try (BufferedReader reader = new BufferedReader(new FileReader(wines))) {
 			String line = reader.readLine();
 			String[] tokens = null;

@@ -33,6 +33,8 @@ public class CatalogoDeSaldos extends Catalogo {
 	}
 
 	public void registerUser(String user) {
+		hmac.confirmHmac();
+		
 		String budgetRow = null;
 
 		try {
@@ -44,6 +46,9 @@ public class CatalogoDeSaldos extends Catalogo {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		hmac.writeHmac();
+		
 		usersBudget.put(user, STARTING_BUDGET);
 
 	}
@@ -60,11 +65,15 @@ public class CatalogoDeSaldos extends Catalogo {
 	}
 
 	public void updateMoney(String user, double value) {
+		hmac.confirmHmac();
+		
 		double newValue = usersBudget.get(user) +value;
 
 		String target = user + SEPARATOR + usersBudget.get(user);
 		String replacement = user + SEPARATOR + newValue;
 		changeLine(target, replacement, budgets);
+		
+		hmac.writeHmac();
 
 		usersBudget.put(user, newValue);
 	}
@@ -76,6 +85,8 @@ public class CatalogoDeSaldos extends Catalogo {
 
 	@Override
 	public void load() {
+		hmac.confirmHmac();
+		
 		try (BufferedReader reader = new BufferedReader(new FileReader(budgets))) {
 			String line = reader.readLine();
 			String[] tokens = null;

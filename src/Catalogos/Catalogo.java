@@ -7,6 +7,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import logs.Hmac;
+
 /**
  *
  * @author Afonso Santos - FC56368
@@ -16,6 +18,7 @@ import java.io.IOException;
  */
 public abstract class Catalogo {
 	protected static final String SEPARATOR = ":";
+	protected Hmac hmac = Hmac.getInstance();
 
 	protected static void changeLine(String targetLine, String toReplace, File file) {
 		StringBuilder sb = new StringBuilder();
