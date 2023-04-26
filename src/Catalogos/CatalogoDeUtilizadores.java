@@ -36,7 +36,8 @@ public class CatalogoDeUtilizadores extends Catalogo {
 	private File users;
 	private Map<String, String> registeredUsers;
 	private SecretKey secretKey;
-
+	private AlgorithmParameters params;
+	
 	private CatalogoDeUtilizadores() {
 		users = new File(USERS_FILE);
 		registeredUsers = new HashMap<>();
@@ -58,9 +59,7 @@ public class CatalogoDeUtilizadores extends Catalogo {
 	public void registerUser(String user, String certificateFileName) {
 		String toEncrypt = user + SEPARATOR + certificateFileName + "\n";
 		byte[] data = null;
-		byte[] dataParams = null;
 		byte[] decryptedData = null;
-		byte[] newParams = null;
 		byte[] encryptedBytes = null;
 		
 		//Read the data that was previously on the file
@@ -68,10 +67,8 @@ public class CatalogoDeUtilizadores extends Catalogo {
 		
 		if (data.length > 0) { //time to decrypt
 			//Get the parameters
-			dataParams = getFileData(new File("serverFiles/params.txt"));
 			//Now decrypt the data
-			decryptedData = decryptData(dataParams, data);
-			
+			decryptedData = decryptData(data);
 			//At this point, the contents of the users files are decrypted
 			
 			//Lets merge the previous contents of the file with this new line
@@ -90,33 +87,26 @@ public class CatalogoDeUtilizadores extends Catalogo {
 			//At this point, I have all the content of the file in a new byte[], ready to be encrypted and write
 			try {
 				Cipher c = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
-				c.init(Cipher.ENCRYPT_MODE, secretKey);
+				c.init(Cipher.ENCRYPT_MODE, secretKey, params);
 				encryptedBytes = c.doFinal(mergedContents);
-				newParams = c.getParameters().getEncoded();
-			} catch (NoSuchAlgorithmException | IOException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+			} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | InvalidAlgorithmParameterException e) {
 				e.printStackTrace();
 			}
 			
 			//Now, just write the new encrypted contents to the file
 			writeToFile(encryptedBytes, users);
-			//And write the new params to a file as well
-			writeToFile(newParams, new File("serverFiles/params.txt"));
 		}
 		else { //There is nothing on the users file, just encrypt this data and write
 			try {
 				Cipher c = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
-				c.init(Cipher.ENCRYPT_MODE, secretKey);
+				c.init(Cipher.ENCRYPT_MODE, secretKey, params);
 				encryptedBytes = c.doFinal(toEncrypt.getBytes());
-				newParams = c.getParameters().getEncoded();
-			} catch (NoSuchAlgorithmException | IOException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+			} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | InvalidAlgorithmParameterException e) {
 				e.printStackTrace();
 			}
 			
 			//Now, just write the new encrypted contents to the file
 			writeToFile(encryptedBytes, users);
-			
-			//And write the new params to a file as well
-			writeToFile(newParams, new File("serverFiles/params.txt"));
 		}		
 		registeredUsers.put(user, certificateFileName);
 	}
@@ -136,14 +126,33 @@ public class CatalogoDeUtilizadores extends Catalogo {
 		byte[] dataParams = null;
 		byte[] decryptedData = null;
 		
+		dataParams = getFileData(new File("serverFiles/params.txt"));
+		if (dataParams.length > 0) {
+			try {
+				params = AlgorithmParameters.getInstance("PBEWithHmacSHA256AndAES_128");
+				params.init(dataParams);
+			} catch (NoSuchAlgorithmException | IOException e) {
+				e.printStackTrace();
+			}
+		}
+		else {
+			try {
+				Cipher c = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
+				c.init(Cipher.ENCRYPT_MODE, secretKey);
+				dataParams = c.getParameters().getEncoded();
+				params = AlgorithmParameters.getInstance("PBEWithHmacSHA256AndAES_128");
+				params.init(dataParams);
+				writeToFile(dataParams, new File("serverFiles/params.txt"));
+			} catch (IOException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException e) {
+				e.printStackTrace();
+			}
+		}
 		data = getFileData(users);
 		
 		if (data.length > 0) { //decrypt!
 			//Get the parameters
-			dataParams = getFileData(new File("serverFiles/params.txt"));
 			//decrypt the data
-			decryptedData = decryptData(dataParams, data);
-			
+			decryptedData = decryptData(data);
 			System.out.println(new String(decryptedData));
 			String[] lines = new String(decryptedData).split("\n");
 			for (String line : lines) {
@@ -153,15 +162,13 @@ public class CatalogoDeUtilizadores extends Catalogo {
 		}
 	}
 	
-	private byte[] decryptData(byte[] params, byte[] toDecrypt) {
+	private byte[] decryptData(byte[] toDecrypt) {
 		byte[] decrypted = null;
 		try {
-			AlgorithmParameters p = AlgorithmParameters.getInstance("PBEWithHmacSHA256AndAES_128");
-			p.init(params);
 			Cipher d = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
-			d.init(Cipher.DECRYPT_MODE, secretKey, p);
+			d.init(Cipher.DECRYPT_MODE, secretKey, params);
 			decrypted = d.doFinal(toDecrypt);
-		} catch (NoSuchAlgorithmException | IOException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
 			e.printStackTrace();
 		}
 		return decrypted;
