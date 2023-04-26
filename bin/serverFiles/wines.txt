@@ -1,2 +1,0 @@
-vinho1:serverFiles/images/vinho1_server.jpg:0:0:7
-vinho2:serverFiles/images/vinho2_server.jpg:0:0:0

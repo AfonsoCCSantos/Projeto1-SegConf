@@ -85,7 +85,6 @@ public class CatalogoDeSaldos extends Catalogo {
 
 	@Override
 	public void load() {
-		hmac.confirmHmac();
 		
 		try (BufferedReader reader = new BufferedReader(new FileReader(budgets))) {
 			String line = reader.readLine();

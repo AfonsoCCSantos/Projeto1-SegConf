@@ -135,7 +135,6 @@ public class CatalogoDeVinhos extends Catalogo {
 
 	@Override
 	public void load() {
-		hmac.confirmHmac();
 		try (BufferedReader reader = new BufferedReader(new FileReader(wines))) {
 			String line = reader.readLine();
 			String[] tokens = null;

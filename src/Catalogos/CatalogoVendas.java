@@ -144,7 +144,6 @@ public class CatalogoVendas extends Catalogo {
 
 	@Override
 	public void load() {
-		hmac.confirmHmac();
 		
 		try (BufferedReader reader = new BufferedReader(new FileReader(sells))) {
 			String line = reader.readLine();

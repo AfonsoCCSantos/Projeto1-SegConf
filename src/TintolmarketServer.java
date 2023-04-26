@@ -139,6 +139,8 @@ public class TintolmarketServer {
         bc.setPrivateKey(privateKey);
         bc.setPublicKey(publicKey);
         
+        hmac.confirmHmac();
+        
         if(!bc.verifyIntegrityOfBlockchain()) {
         	System.out.println(FAILED_INTEGRITY_VERIFICATION_ERROR_MSG);
 			System.exit(-1);

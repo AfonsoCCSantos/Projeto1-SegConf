@@ -96,8 +96,6 @@ public class CatalogoDeMensagens extends Catalogo {
 
 	@Override
 	public void load() {
-		hmac.confirmHmac();
-		
 		try (BufferedReader reader = new BufferedReader(new FileReader(messagesFile))) {
 			String line = reader.readLine();
 			String[] tokens = null;

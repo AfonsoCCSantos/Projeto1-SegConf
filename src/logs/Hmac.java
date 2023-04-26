@@ -104,7 +104,9 @@ public class Hmac {
 	public boolean verifyMac() {
 		System.out.println("VERIFYING HMAC");
 		
-		if (macs.length() == 0) return true;
+		if (macs.length() == 0) {
+			writeHmac();
+		}
 		
 		boolean verified = false;
 		
