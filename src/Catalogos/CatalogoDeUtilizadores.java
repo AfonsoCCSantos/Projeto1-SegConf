@@ -41,9 +41,11 @@ public class CatalogoDeUtilizadores extends Catalogo {
 	private CatalogoDeUtilizadores() {
 		users = new File(USERS_FILE);
 		registeredUsers = new HashMap<>();
+		File paramsFile = new File("serverFiles/params.txt");
 		
 		try {
 			users.createNewFile();
+			paramsFile.createNewFile();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -118,7 +120,7 @@ public class CatalogoDeUtilizadores extends Catalogo {
 	public String getCertificateFileName(String userId) {
 		return registeredUsers.get(userId);
 	}
-
+	
 	@Override
 	public void load() {
 		//First, get all the content of the users file

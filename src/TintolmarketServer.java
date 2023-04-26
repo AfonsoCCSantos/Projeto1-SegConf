@@ -23,6 +23,7 @@ import Catalogos.CatalogoDeUtilizadores;
 import Catalogos.CatalogoDeVinhos;
 import Catalogos.CatalogoVendas;
 import logs.Blockchain;
+import logs.Hmac;
 
 
 /**
@@ -122,15 +123,12 @@ public class TintolmarketServer {
 		} catch (KeyStoreException | NoSuchAlgorithmException | IOException | UnrecoverableKeyException | java.security.cert.CertificateException e) {
 			e.printStackTrace();
 		}
-    	
-    	File params = new File("serverFiles/params.txt");
-    	try {
-			params.createNewFile();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 
         SSLServerSocket serverSocket = initSocket(port);
+        
+        Hmac hmac = Hmac.getInstance();
+        hmac.setKey(passwordKey);
+        
         CatalogoDeMensagens.getInstance().load();
         CatalogoDeVinhos.getInstance().load();
         CatalogoVendas.getInstance().load();
@@ -140,6 +138,8 @@ public class TintolmarketServer {
         Blockchain bc = Blockchain.getInstance();
         bc.setPrivateKey(privateKey);
         bc.setPublicKey(publicKey);
+        
+        hmac.confirmHmac();
         
         if(!bc.verifyIntegrityOfBlockchain()) {
         	System.out.println(FAILED_INTEGRITY_VERIFICATION_ERROR_MSG);
