@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +45,7 @@ public class CatalogoDeMensagens extends Catalogo {
 		return INSTANCE;
 	}
 
-	public void registerMessage(String toUser, String fromUser, byte[] message) {
+	public void registerMessage(String toUser, String fromUser, String message) {
 		hmac.confirmHmac();
 		
 		Message msg = new Message(fromUser,message);
@@ -73,25 +74,26 @@ public class CatalogoDeMensagens extends Catalogo {
 		hmac.writeHmac();
 	}
 
-	public String readMessages(String user) {
+	public String[] readMessages(String user) {
 		hmac.confirmHmac();
 		
 		if (!messages.containsKey(user)) {
-			return "0 new messages.";
+			return null;
 		}
 		StringBuilder sb = new StringBuilder("New Messages:\n");
 		StringBuilder targetLine = new StringBuilder(user + "-");
 		List<Message> messagesToRead = messages.get(user);
-		for (Message m: messagesToRead) {
-			sb.append("Models.Message from: " + m.getSender() + "\nContent: " + m.getText() + "\n\n");
+		String[] messagesArray = new String[messagesToRead.size()];
+		for (int i = 0; i < messagesToRead.size(); i++) {
+//			sb.append("Models.Message from: " + m.getSender() + "\nContent: " + m.getText() + "\n\n");
+			Message m = messagesToRead.get(i);
+			messagesArray[i] = m.getSender() + ":" + m.getText();
 			targetLine.append(m.getSender() + ":" + m.getText() + ";");
 		}
 		changeLine(targetLine.deleteCharAt(targetLine.length()-1).toString(), null, this.messagesFile);
-		
 		hmac.writeHmac();
-		
 		messages.remove(user);
-		return sb.toString();
+		return messagesArray;
 	}
 
 	@Override

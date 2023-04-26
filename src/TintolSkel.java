@@ -22,8 +22,13 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.SignedObject;
+import java.util.Base64;
 import java.util.Random;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
 import Catalogos.CatalogoDeMensagens;
@@ -469,9 +474,9 @@ public class TintolSkel {
 //				e.printStackTrace();
 //			}
 //    	}
-    	byte[] message;
+    	String message = null;
 		try {
-			message = (byte[]) this.in.readObject();
+			message = (String) this.in.readObject();
 		} catch (ClassNotFoundException | IOException e) {
 			e.printStackTrace();
 		}
@@ -487,12 +492,12 @@ public class TintolSkel {
     }
 
     public void read(String user) {
-    	String messages = null;
+    	String[] allMessages = null;
     	synchronized (this.catMessages) {
-    		messages = this.catMessages.readMessages(user);
+    		allMessages = this.catMessages.readMessages(user);
     	}
     	try {
-			out.writeObject(messages);
+			out.writeObject(allMessages);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

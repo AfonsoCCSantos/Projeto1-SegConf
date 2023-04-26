@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyStore;
@@ -19,6 +20,7 @@ import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.util.Base64;
 import java.security.SignedObject;
 import logs.SellTransaction;
 import logs.BuyTransaction;
@@ -386,7 +388,7 @@ public class TintolStub {
 			encrypted = c.doFinal(message.getBytes());
 			//Send the message to the server
 			this.out.writeObject("talk" + " " + tokens[1]);
-			this.out.writeObject(encrypted);
+			this.out.writeObject(Base64.getEncoder().encodeToString(encrypted));
 		} catch (KeyStoreException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | IOException e) {
 			e.printStackTrace();
 		}
@@ -404,16 +406,33 @@ public class TintolStub {
     }
 
     public void read() {
-        String res = "";
+        String res[] = null;
         try {
             this.out.writeObject("read");
-            res = (String) this.in.readObject();
+            res = (String[]) this.in.readObject();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
+        //decode the message
+//        byte[] decoded = Base64.getDecoder().decode(res);
+        //Decrypt it
+        StringBuilder sb = new StringBuilder();
+        for (String message : res) {
+        	String[] tokens = message.split(":");
+        	byte[] decrypted = null;
+        	byte[] decoded = Base64.getDecoder().decode(tokens[1]);
+    		try {
+    			Cipher d = Cipher.getInstance("RSA");
+    			d.init(Cipher.DECRYPT_MODE, this.privateKey);
+    			decrypted = d.doFinal(decoded);
+    			sb.append("From: " + tokens[0] + " -> " + new String(decrypted) + "\n");
+    		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+    			e.printStackTrace();
+    		}
+        }
+        System.out.println(sb.toString());
         //If everything went ok then the server will answer with the user's messages, otherwise
         //it will say that there are no messages.
-        System.out.println(res);
         System.out.println();
     }
     

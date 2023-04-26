@@ -11,7 +11,7 @@ public class Message {
 
 	private String sender;
 	private String text;
-
+	
 	public Message(String msgLine) {
 		String[] tokens = msgLine.split(":");
 		this.sender = tokens[0];
