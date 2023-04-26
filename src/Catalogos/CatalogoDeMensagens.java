@@ -44,11 +44,11 @@ public class CatalogoDeMensagens extends Catalogo {
 		return INSTANCE;
 	}
 
-	public void registerMessage(String toUser, String fromUser, String message) {
+	public void registerMessage(String toUser, String fromUser, byte[] message) {
 		hmac.confirmHmac();
 		
 		Message msg = new Message(fromUser,message);
-
+		
 		if (messages.containsKey(toUser)) {
 			List<Message> userMessages = this.messages.get(toUser);
 			StringBuilder targetLine = new StringBuilder(toUser + "-");

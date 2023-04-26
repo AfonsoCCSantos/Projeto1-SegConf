@@ -13,6 +13,7 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
@@ -22,7 +23,10 @@ import java.security.SignedObject;
 import logs.SellTransaction;
 import logs.BuyTransaction;
 
-
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -44,23 +48,26 @@ public class TintolStub {
     private ObjectOutputStream out;
     private ObjectInputStream in;
     private KeyStore keyStore;
+    private KeyStore trustStore;
     private PrivateKey privateKey;
     private String userId;
     
-    public TintolStub(String ip, int port, String keyStoreFileName, String keyStorePassWord) {
+    public TintolStub(String ip, int port, String keyStoreFileName, String keyStorePassWord, String trustStoreFileName) {
         this.socket = connectToServer(ip,port);
         this.out = Utils.gOutputStream(socket);
         this.in = Utils.gInputStream(socket);
         try {
 			FileInputStream kfile = new FileInputStream("userFiles/" + keyStoreFileName);
+			FileInputStream tFile = new FileInputStream("userFiles/" + trustStoreFileName);
 			this.keyStore = KeyStore.getInstance("JKS");
 			this.keyStore.load(kfile, "password".toCharArray());
+			this.trustStore = KeyStore.getInstance("JKS");
+			this.trustStore.load(tFile, "password".toCharArray());
 	        String alias = this.keyStore.aliases().nextElement();
 	        this.privateKey = (PrivateKey) this.keyStore.getKey(alias, keyStorePassWord.toCharArray());
 		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException | UnrecoverableKeyException e) {
 			e.printStackTrace();
 		}
-        
     }
     
     private static SSLSocket connectToServer(String ip, int port) {
@@ -351,14 +358,46 @@ public class TintolStub {
             System.out.println(INVALID_FORMAT);
             return;
         }
-
+        
         if(!ValidationLib.verifyString(tokens[1])) {
         	System.out.println("The name of the user is not valid.");
             return;
         }
-
-        String res = sendReceive(tokens);
-
+        
+        System.out.println("Eu envio a mensagem para :" + tokens[1]);
+        //Primeiro, obter a mensagem que se pretende enviar
+        StringBuilder sb = new StringBuilder();
+        for(int i = 2; i < tokens.length; i++) { //message starts in tokens[2]
+        	sb.append(tokens[i]+" ");
+        }
+        String message = sb.deleteCharAt(sb.length()-1).toString();
+        
+        
+        byte[] encrypted = null;
+        
+        //Encriptar a mensagem, para tal, vou usar a PublicKey do User para que eu quero enviar
+        
+        try {
+        	//1 - Obter a public key a partir da truststore
+			PublicKey userToSendPK = this.trustStore.getCertificate(tokens[1]).getPublicKey();
+			Cipher c = Cipher.getInstance("RSA");
+			c.init(Cipher.ENCRYPT_MODE, userToSendPK);
+			//Codificar a mensagem a enviar
+			encrypted = c.doFinal(message.getBytes());
+			//Send the message to the server
+			this.out.writeObject("talk" + " " + tokens[1]);
+			this.out.writeObject(encrypted);
+		} catch (KeyStoreException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | IOException e) {
+			e.printStackTrace();
+		}
+        
+        //Send the encrypted message to the server
+        String res = null;
+        try {
+			res = (String) this.in.readObject();
+		} catch (ClassNotFoundException | IOException e) {
+			e.printStackTrace();
+		}
         //If everything went ok then the server will answer with a success message, otherwise, the error message.
         System.out.println(res);
         System.out.println();

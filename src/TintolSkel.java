@@ -460,19 +460,24 @@ public class TintolSkel {
         }
     }
 
-    public void talk(String fromUser, String toUser, String message) {
-    	if (!this.catUsers.userExists(toUser)) {
-    		try {
-				out.writeObject("The user does not exist.");
-				return;
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-    	}
+    public void talk(String fromUser, String toUser) {
+//    	if (!this.catUsers.userExists(toUser)) {
+//    		try {
+//				out.writeObject("The user does not exist.");
+//				return;
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
+//    	}
+    	byte[] message;
+		try {
+			message = (byte[]) this.in.readObject();
+		} catch (ClassNotFoundException | IOException e) {
+			e.printStackTrace();
+		}
     	synchronized (this.catMessages) {
     		this.catMessages.registerMessage(toUser, fromUser, message);
     	}
-
    		try {
 			out.writeObject("Models.Message sent successfully.");
 			return;

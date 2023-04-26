@@ -96,16 +96,17 @@ public class ServerThread extends Thread {
         			break;
         		case "talk":
         		case "t":
-        			if (tokens.length < 3) {
-        				closeConnection();
-            			return;
-        			}
-        			StringBuilder sb = new StringBuilder();
-        	        for(int i = 2; i < tokens.length; i++) { //message starts in tokens[2]
-        	        	sb.append(tokens[i]+" ");
-        	        }
-        	        String message = sb.deleteCharAt(sb.length()-1).toString();
-             		skel.talk(user, tokens[1],message);
+        			
+//        			if (tokens.length < 3) {
+//        				closeConnection();
+//            			return;
+//        			}
+//        			StringBuilder sb = new StringBuilder();
+//        	        for(int i = 2; i < tokens.length; i++) { //message starts in tokens[2]
+//        	        	sb.append(tokens[i]+" ");
+//        	        }
+//        	        String message = sb.deleteCharAt(sb.length()-1).toString();
+             		skel.talk(user, tokens[1]);
         			break;
         		case "read":
         		case "r":

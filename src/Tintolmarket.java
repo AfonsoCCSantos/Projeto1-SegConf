@@ -39,7 +39,7 @@ public class Tintolmarket {
     	System.setProperty("javax.net.ssl.trustStore", "userFiles/" + trustStoreFileName);
         System.setProperty("javax.net.ssl.trustStorePassword", TRUSTSTORE_PASSWORD);
         
-        TintolStub stub = new TintolStub(ipAddress,port,keyStoreFileName,keyStorePassword);
+        TintolStub stub = new TintolStub(ipAddress,port,keyStoreFileName,keyStorePassword, trustStoreFileName);
         boolean res = stub.login(userId);
 
         if (!res) {
