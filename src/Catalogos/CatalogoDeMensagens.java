@@ -46,8 +46,6 @@ public class CatalogoDeMensagens extends Catalogo {
 	}
 
 	public void registerMessage(String toUser, String fromUser, String message) {
-		hmac.confirmHmac();
-		
 		Message msg = new Message(fromUser,message);
 		
 		if (messages.containsKey(toUser)) {
@@ -75,8 +73,6 @@ public class CatalogoDeMensagens extends Catalogo {
 	}
 
 	public String[] readMessages(String user) {
-		hmac.confirmHmac();
-		
 		if (!messages.containsKey(user)) {
 			return null;
 		}

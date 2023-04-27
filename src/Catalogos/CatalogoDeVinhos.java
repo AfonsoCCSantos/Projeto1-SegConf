@@ -51,7 +51,6 @@ public class CatalogoDeVinhos extends Catalogo {
 	public boolean registerWine(String wine, String imagePath) {
 		if (wineExists(wine)) return false;
 		String wineRow = null;
-		this.hmac.confirmHmac();
 		try {
 			BufferedWriter writer = null;
 			writer = new BufferedWriter(new FileWriter(wines, true));
@@ -67,7 +66,6 @@ public class CatalogoDeVinhos extends Catalogo {
 	}
 
 	public void classifyWine(String wineName, int stars) {
-		hmac.confirmHmac();
 		Wine wine = winesMap.get(wineName);
 		String targetLine = wine.getLine();
 		wine.classify(stars);
@@ -102,7 +100,6 @@ public class CatalogoDeVinhos extends Catalogo {
 		int newQuantity = 0;
 		StringBuilder sb = new StringBuilder();
 
-		hmac.confirmHmac();
 		try (BufferedReader reader = new BufferedReader(new FileReader(wines))){
 			line = reader.readLine();
 			String[] tokens = null;

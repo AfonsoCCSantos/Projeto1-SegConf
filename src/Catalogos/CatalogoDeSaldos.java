@@ -33,8 +33,6 @@ public class CatalogoDeSaldos extends Catalogo {
 	}
 
 	public void registerUser(String user) {
-		hmac.confirmHmac();
-		
 		String budgetRow = null;
 
 		try {
@@ -65,8 +63,6 @@ public class CatalogoDeSaldos extends Catalogo {
 	}
 
 	public void updateMoney(String user, double value) {
-		hmac.confirmHmac();
-		
 		double newValue = usersBudget.get(user) +value;
 
 		String target = user + SEPARATOR + usersBudget.get(user);

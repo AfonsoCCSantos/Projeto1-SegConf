@@ -62,8 +62,6 @@ public class CatalogoVendas extends Catalogo {
 	
 
 	public void sellWine(String wine, String user, String value, String quantity) {
-		hmac.confirmHmac();
-		
 		String newRow = null;
 
 		try(BufferedWriter writer = new BufferedWriter(new FileWriter(sells,true))) {
@@ -117,8 +115,6 @@ public class CatalogoVendas extends Catalogo {
 
 
 	public void removeQuantityFromSell(String wine, String seller, String quantity) {
-		hmac.confirmHmac();
-		
 		List<WineSell> sellsList = this.sellsMap.get(wine);
 		WineSell targetSell = null;
 		for (WineSell s : sellsList){
