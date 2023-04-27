@@ -73,31 +73,26 @@ public class Hmac {
 	
 	
 	public void writeHmac() {
-	
-		byte[] content = getContentAllFiles();
- 
+		byte[] hmac = calculateHmac();
 		
 		try {
 			FileOutputStream fos = new FileOutputStream(macs);
-			Mac mac = Mac.getInstance("HmacSHA256");
-			mac.init(key);
 			ObjectOutputStream oos = new ObjectOutputStream(fos);
 			
-			mac.update(content);
-			oos.writeObject(mac.doFinal( ));
+			oos.writeObject(hmac);
+			oos.close();
 			fos.close();
-			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
 	
 	public void confirmHmac() {
 		if (!verifyMac()) {
 			System.out.println("HMAC ERROR!");
 			System.exit(-1);
 		}
+		System.out.println("CORRECT HMAC");
 	}
 	
 	public boolean verifyMac() {
@@ -109,31 +104,34 @@ public class Hmac {
 		
 		boolean verified = false;
 		
-		byte[] content = getContentAllFiles();
-		
 		try {
 			FileInputStream fos = new FileInputStream(macs);
 			ObjectInputStream oos = new ObjectInputStream(fos);
 			
 			byte[] hmac = (byte[]) oos.readObject();
-			
-			
-			Mac mac = Mac.getInstance("HmacSHA256");
-			
-			mac.init(key);
-			mac.update(content);
-			byte[] hmacNew = mac.doFinal( );
+			byte[] hmacNew = calculateHmac();
 			
 			oos.close();
 			fos.close();
-			
 			verified = new String(hmac).equals(new String(hmacNew));
-			if (verified) System.out.println("CORRECT HMAC");
-			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return verified;
 	}
-
+	
+	public byte[] calculateHmac() {
+		byte[] content = getContentAllFiles();
+		byte[] hmac = null;
+		try {
+			Mac mac = Mac.getInstance("HmacSHA256");
+			mac.init(key);
+			
+			mac.update(content);
+			hmac = mac.doFinal();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return hmac;
+	}
 }

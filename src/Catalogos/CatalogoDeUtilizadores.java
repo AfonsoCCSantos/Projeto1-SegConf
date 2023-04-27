@@ -37,12 +37,12 @@ public class CatalogoDeUtilizadores extends Catalogo {
 	private Map<String, String> registeredUsers;
 	private SecretKey secretKey;
 	private AlgorithmParameters params;
-	
+
 	private CatalogoDeUtilizadores() {
 		users = new File(USERS_FILE);
 		registeredUsers = new HashMap<>();
 		File paramsFile = new File("serverFiles/params.txt");
-		
+
 		try {
 			users.createNewFile();
 			paramsFile.createNewFile();
@@ -57,77 +57,64 @@ public class CatalogoDeUtilizadores extends Catalogo {
 		}
 		return INSTANCE;
 	}
-	
+
 	public void registerUser(String user, String certificateFileName) {
 		String toEncrypt = user + SEPARATOR + certificateFileName + "\n";
 		byte[] data = null;
 		byte[] decryptedData = null;
 		byte[] encryptedBytes = null;
-		
+
 		//Read the data that was previously on the file
 		data = getFileData(users);
-		
-		if (data.length > 0) { //time to decrypt
-			//Get the parameters
-			//Now decrypt the data
-			decryptedData = decryptData(data);
-			//At this point, the contents of the users files are decrypted
-			
-			//Lets merge the previous contents of the file with this new line
-			byte[] toEncryptBytes = toEncrypt.getBytes();
-			byte[] mergedContents = new byte[decryptedData.length + toEncryptBytes.length];
-			int offset = 0;
-			for (int i = 0; i < decryptedData.length; i++) {
-				mergedContents[offset] = decryptedData[i];
-				offset++;
-			}
-			for (int i = 0; i < toEncryptBytes.length; i++) {
-				mergedContents[offset] = toEncryptBytes[i];
-				offset++;
-			}
-			
-			//At this point, I have all the content of the file in a new byte[], ready to be encrypted and write
-			try {
-				Cipher c = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
-				c.init(Cipher.ENCRYPT_MODE, secretKey, params);
-				encryptedBytes = c.doFinal(mergedContents);
-			} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | InvalidAlgorithmParameterException e) {
-				e.printStackTrace();
-			}
-			
-			//Now, just write the new encrypted contents to the file
-			writeToFile(encryptedBytes, users);
+
+		//Get the parameters
+		//Now decrypt the data
+		decryptedData = decryptData(data);
+		//At this point, the contents of the users files are decrypted
+
+		//Lets merge the previous contents of the file with this new line
+		byte[] toEncryptBytes = toEncrypt.getBytes();
+		byte[] mergedContents = new byte[decryptedData.length + toEncryptBytes.length];
+		int offset = 0;
+		for (int i = 0; i < decryptedData.length; i++) {
+			mergedContents[offset] = decryptedData[i];
+			offset++;
 		}
-		else { //There is nothing on the users file, just encrypt this data and write
-			try {
-				Cipher c = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
-				c.init(Cipher.ENCRYPT_MODE, secretKey, params);
-				encryptedBytes = c.doFinal(toEncrypt.getBytes());
-			} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | InvalidAlgorithmParameterException e) {
-				e.printStackTrace();
-			}
-			
-			//Now, just write the new encrypted contents to the file
-			writeToFile(encryptedBytes, users);
-		}		
+		for (int i = 0; i < toEncryptBytes.length; i++) {
+			mergedContents[offset] = toEncryptBytes[i];
+			offset++;
+		}
+
+		//At this point, I have all the content of the file in a new byte[], ready to be encrypted and write
+		try {
+			Cipher c = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
+			c.init(Cipher.ENCRYPT_MODE, secretKey, params);
+			encryptedBytes = c.doFinal(mergedContents);
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | InvalidAlgorithmParameterException e) {
+			e.printStackTrace();
+		}
+
+		//Now, just write the new encrypted contents to the file
+		writeToFile(encryptedBytes, users);
+
 		registeredUsers.put(user, certificateFileName);
 	}
-	
+
 	public boolean userExists(String user) {
 		return registeredUsers.containsKey(user);
 	}
-	
+
 	public String getCertificateFileName(String userId) {
 		return registeredUsers.get(userId);
 	}
-	
+
 	@Override
 	public void load() {
 		//First, get all the content of the users file
 		byte[] data = null;
 		byte[] dataParams = null;
 		byte[] decryptedData = null;
-		
+
 		dataParams = getFileData(new File("serverFiles/params.txt"));
 		if (dataParams.length > 0) {
 			try {
@@ -150,7 +137,7 @@ public class CatalogoDeUtilizadores extends Catalogo {
 			}
 		}
 		data = getFileData(users);
-		
+
 		if (data.length > 0) { //decrypt!
 			//Get the parameters
 			//decrypt the data
@@ -163,7 +150,7 @@ public class CatalogoDeUtilizadores extends Catalogo {
 			}
 		}
 	}
-	
+
 	private byte[] decryptData(byte[] toDecrypt) {
 		byte[] decrypted = null;
 		try {
@@ -175,7 +162,7 @@ public class CatalogoDeUtilizadores extends Catalogo {
 		}
 		return decrypted;
 	}
-	
+
 	private void writeToFile(byte[] data, File file) {
 		try (FileOutputStream fos = new FileOutputStream(file)) {
 			fos.write(data);
@@ -183,7 +170,7 @@ public class CatalogoDeUtilizadores extends Catalogo {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private byte[] getFileData(File file) {
 		byte[] data = null;
 		try {
@@ -202,7 +189,7 @@ public class CatalogoDeUtilizadores extends Catalogo {
 		}
 		return data;
 	}
-
+	
 	public SecretKey getSecretKey() {
 		return secretKey;
 	}
