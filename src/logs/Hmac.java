@@ -89,15 +89,13 @@ public class Hmac {
 	
 	public void confirmHmac() {
 		if (!verifyMac()) {
-			System.out.println("HMAC ERROR!");
+			System.out.println("Failed verification of HMAC.");
 			System.exit(-1);
 		}
-		System.out.println("CORRECT HMAC");
+		System.out.println("HMAC verified.");
 	}
 	
 	public boolean verifyMac() {
-		System.out.println("VERIFYING HMAC");
-		
 		if (macs.length() == 0) {
 			writeHmac();
 		}

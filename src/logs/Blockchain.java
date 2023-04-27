@@ -243,7 +243,7 @@ public class Blockchain {
 				MessageDigest md = MessageDigest.getInstance("SHA-256");
 				previousBlockHash = md.digest(bytes); //This will serve as the hash for the new block
 			} catch (IOException | ClassNotFoundException | NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
-				e.printStackTrace();
+				return false;
 			}
 		}
 		return true;

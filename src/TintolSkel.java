@@ -26,7 +26,6 @@ import Catalogos.CatalogoDeUtilizadores;
 import Catalogos.CatalogoDeVinhos;
 import Catalogos.CatalogoVendas;
 import logs.Blockchain;
-import logs.BuyTransaction;
 import logs.SellTransaction;
 
 
@@ -145,8 +144,15 @@ public class TintolSkel {
 					FileOutputStream os = new FileOutputStream("serverFiles/" + certificateFileName);
 					os.write(buf);
 					os.close();	
-					this.catUsers.registerUser(user,certificateFileName);
-					this.catSaldos.registerUser(user);
+					
+					synchronized(this.catUsers) {
+						this.catUsers.registerUser(user,certificateFileName);
+					}
+					
+					synchronized (this.catSaldos) {
+						this.catSaldos.registerUser(user);
+					}
+					
 					this.currentUserPublicKey = receivedCertificate.getPublicKey();
 					out.writeObject(SUCCESS_LOGIN_MESSAGE);
 					out.writeObject(true);
@@ -280,8 +286,8 @@ public class TintolSkel {
 				e.printStackTrace();
 			}
 
-			wineInfo = catWines.getWineInfo(wine);
-			f = new File(catWines.getWine(wine).getImage());
+			wineInfo = this.catWines.getWineInfo(wine);
+			f = new File(this.catWines.getWine(wine).getImage());
 		}
 
 		String extension = Utils.getFileExtension(catWines.getWine(wine).getImage());
@@ -344,7 +350,7 @@ public class TintolSkel {
 
 		double winePrice = 0;
 
-		synchronized(this.catVendas){
+		synchronized(this.catVendas) {
 			if (!this.catVendas.userSellsWine(seller, wine)) {
 				try {
 					out.writeObject("-1");

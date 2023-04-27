@@ -146,7 +146,6 @@ public class CatalogoDeUtilizadores extends Catalogo {
 			//Get the parameters
 			//decrypt the data
 			decryptedData = decryptData(data);
-			System.out.println(new String(decryptedData));
 			String[] lines = new String(decryptedData).split("\n");
 			for (String line : lines) {
 				String[] tokens = line.split(SEPARATOR);

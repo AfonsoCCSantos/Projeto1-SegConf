@@ -42,7 +42,6 @@ public class Tintolmarket {
         boolean res = stub.login(userId);
 
         if (!res) {
-            System.err.println("Wrong password.");
             System.exit(-1);
         }
         
