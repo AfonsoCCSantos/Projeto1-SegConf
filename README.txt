@@ -1,6 +1,6 @@
-Para compilar o jar do servidor: jar cvfm TintolmarketServer.jar manifestTintolmarketServer.txt TintolmarketServer.class ServerThread.class TintolSkel.class Catalogos.Catalogo.class Catalogos.CatalogoDeMensagens.class Catalogos.CatalogoDeSaldos.class Catalogos.CatalogoDeUtilizadores.class Catalogos.CatalogoDeVinhos.class Catalogos.CatalogoVendas.class Models.Message.class Utils.class ValidationLib.class Models.Wine.class Models.WineSell.class
+Para compilar o jar do servidor: jar cvfm TintolmarketServer.jar manifestTintolmarketServer.txt TintolmarketServer.class ServerThread.class TintolSkel.class Catalogos/Catalogo.class Catalogos/CatalogoDeMensagens.class Catalogos/CatalogoDeSaldos.class Catalogos/CatalogoDeUtilizadores.class Catalogos/CatalogoDeVinhos.class Catalogos/CatalogoVendas.class Models/Message.class Utils.class ValidationLib.class Models/Wine.class Models/WineSell.class logs/Blockchain.class logs/Bloco.class logs/BuyTransaction.class logs/Hmac.class logs/SellTransaction.class logs/Transaction.class
 
-Para compilar o jar do cliente: jar cvfm Tintolmarket.jar manifestTintolmarket.txt Tintolmarket.class TintolStub.class Utils.class ValidationLib.class
+Para compilar o jar do cliente: jar cvfm Tintolmarket.jar manifestTintolmarket.txt Tintolmarket.class TintolStub.class Utils.class ValidationLib.class logs/BuyTransaction.class logs/SellTransaction.class logs/Transaction.class
 
 Foram tambem enviados os ficheiros manifestTintolmarketServer.txt e manifestTintolmarket.txt
 
