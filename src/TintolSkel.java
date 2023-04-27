@@ -261,7 +261,7 @@ public class TintolSkel {
 	}
 
 	public void view(String wine) {
-		String wineInfo = "Models.Wine information:\n";
+		String wineInfo = "Wine information:\n";
 		File f = null;
 		synchronized (this.catWines) {
 			if (!this.catWines.wineExists(wine)) {
@@ -470,7 +470,7 @@ public class TintolSkel {
 			this.catMessages.registerMessage(toUser, fromUser, message);
 		}
 		try {
-			out.writeObject("Models.Message sent successfully.");
+			out.writeObject("Message sent successfully.");
 			return;
 		} catch (IOException e) {
 			e.printStackTrace();

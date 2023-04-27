@@ -103,7 +103,7 @@ public class CatalogoVendas extends Catalogo {
 			List<WineSell> wineSells = sellsMap.get(wine);
 
 			for (WineSell w : wineSells) {
-				sb.append(w.getSellInfo());
+				sb.append(w.getSellInfo() + "\n");
 			}
 		}
 
