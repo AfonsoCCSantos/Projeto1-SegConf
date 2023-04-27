@@ -366,7 +366,6 @@ public class TintolStub {
             return;
         }
         
-        System.out.println("Eu envio a mensagem para :" + tokens[1]);
         //Primeiro, obter a mensagem que se pretende enviar
         StringBuilder sb = new StringBuilder();
         for(int i = 2; i < tokens.length; i++) { //message starts in tokens[2]
@@ -413,20 +412,28 @@ public class TintolStub {
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
-        //decode the message
-//        byte[] decoded = Base64.getDecoder().decode(res);
+        if (res == null) {
+        	System.out.println("No new messages");
+        	System.out.println();
+        	return;
+        }
         //Decrypt it
         StringBuilder sb = new StringBuilder();
+        Cipher d = null;
+		try {
+			d = Cipher.getInstance("RSA");
+			d.init(Cipher.DECRYPT_MODE, this.privateKey);
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException e) {
+			e.printStackTrace();
+		}
         for (String message : res) {
         	String[] tokens = message.split(":");
         	byte[] decrypted = null;
         	byte[] decoded = Base64.getDecoder().decode(tokens[1]);
     		try {
-    			Cipher d = Cipher.getInstance("RSA");
-    			d.init(Cipher.DECRYPT_MODE, this.privateKey);
     			decrypted = d.doFinal(decoded);
     			sb.append("From: " + tokens[0] + " -> " + new String(decrypted) + "\n");
-    		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+    		} catch (IllegalBlockSizeException | BadPaddingException e) {
     			e.printStackTrace();
     		}
         }
@@ -459,3 +466,12 @@ public class TintolStub {
     }
 
 }
+
+
+
+
+
+
+
+
+
