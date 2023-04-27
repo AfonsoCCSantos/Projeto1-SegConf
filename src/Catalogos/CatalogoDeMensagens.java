@@ -80,12 +80,10 @@ public class CatalogoDeMensagens extends Catalogo {
 		if (!messages.containsKey(user)) {
 			return null;
 		}
-		StringBuilder sb = new StringBuilder("New Messages:\n");
 		StringBuilder targetLine = new StringBuilder(user + "-");
 		List<Message> messagesToRead = messages.get(user);
 		String[] messagesArray = new String[messagesToRead.size()];
 		for (int i = 0; i < messagesToRead.size(); i++) {
-//			sb.append("Models.Message from: " + m.getSender() + "\nContent: " + m.getText() + "\n\n");
 			Message m = messagesToRead.get(i);
 			messagesArray[i] = m.getSender() + ":" + m.getText();
 			targetLine.append(m.getSender() + ":" + m.getText() + ";");

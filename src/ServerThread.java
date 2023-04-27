@@ -29,7 +29,7 @@ public class ServerThread extends Thread {
     }
 
     public void run() {
-        TintolSkel skel = new TintolSkel(socket, passwordKey,privateKey);
+        TintolSkel skel = new TintolSkel(socket);
 
         String user = skel.loginUser();
         if (user == null) {
@@ -60,12 +60,6 @@ public class ServerThread extends Thread {
         			skel.addWine(tokens[1], "serverFiles/images/"+tokens[1]+"_server." + tokens[2]);
         			break;
         		case "sell":
-//        			if (tokens.length != 4 || !ValidationLib.verifyString(tokens[1]) ||
-//        				!ValidationLib.isValidNumber(tokens[2]) || !ValidationLib.isIntegerNumber(tokens[3])) {
-//        				closeConnection();
-//            			return;
-//        			}
-//        			skel.sellWine(user, tokens[1], tokens[2], tokens[3]);
 					SignedObject sellTransaction = null;
 					sellTransaction = (SignedObject) skel.getTransaction();
         			skel.sellWine(sellTransaction);
@@ -96,16 +90,6 @@ public class ServerThread extends Thread {
         			break;
         		case "talk":
         		case "t":
-        			
-//        			if (tokens.length < 3) {
-//        				closeConnection();
-//            			return;
-//        			}
-//        			StringBuilder sb = new StringBuilder();
-//        	        for(int i = 2; i < tokens.length; i++) { //message starts in tokens[2]
-//        	        	sb.append(tokens[i]+" ");
-//        	        }
-//        	        String message = sb.deleteCharAt(sb.length()-1).toString();
              		skel.talk(user, tokens[1]);
         			break;
         		case "read":
