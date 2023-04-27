@@ -121,6 +121,8 @@ public class TintolmarketServer {
 
 		} catch (KeyStoreException | NoSuchAlgorithmException | IOException | UnrecoverableKeyException | java.security.cert.CertificateException e) {
 			e.printStackTrace();
+			System.out.println("Failed in loading keystore");
+			return;
 		}
 
 		SSLServerSocket serverSocket = initSocket(port);
@@ -167,6 +169,8 @@ public class TintolmarketServer {
 			ss = (SSLServerSocket) ssf.createServerSocket(port);
 		} catch (IOException e) {
 			e.printStackTrace();
+			System.out.println("Failed in initializing server socket");
+			System.exit(-1);
 		}
 		return ss;
 	}

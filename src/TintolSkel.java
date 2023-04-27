@@ -82,10 +82,10 @@ public class TintolSkel {
 
 		try {
 			user = (String) in.readObject();
-		} catch (ClassNotFoundException e) {
+		} catch (ClassNotFoundException | IOException e) {
 			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println("Couldn't get the userId");
+			return null;
 		}
 
 		boolean userExists = this.catUsers.userExists(user);
@@ -95,6 +95,8 @@ public class TintolSkel {
 			out.writeObject(userExists); 
 		} catch (IOException e) {
 			e.printStackTrace();
+			System.out.println("Couldn't send the login information to the user");
+			return null;
 		} 
 
 		if (userExists) {
@@ -108,6 +110,8 @@ public class TintolSkel {
 				userPublicKey = userCertificate.getPublicKey();
 			} catch (FileNotFoundException | CertificateException e) {
 				e.printStackTrace();
+				System.out.println("Couldn't obtain the user certificate");
+				return null;
 			}
 
 			byte[] signedNonce;
@@ -128,6 +132,8 @@ public class TintolSkel {
 				in.close();
 			} catch (ClassNotFoundException | IOException | NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
 				e.printStackTrace();
+				System.out.println("Failure during sign in");
+				return null;
 			}
 			return null;     
 		}
@@ -166,6 +172,8 @@ public class TintolSkel {
 				}
 			} catch (IOException | ClassNotFoundException | NoSuchAlgorithmException | SignatureException | InvalidKeyException | CertificateEncodingException e) {
 				e.printStackTrace();
+				System.out.println("Failure during register");
+				return null;
 			}	
 		}
 		return null;
@@ -187,7 +195,7 @@ public class TintolSkel {
 			}
 			return;
 		}
-
+		
 		try {
 			this.out.writeObject(true);
 			byte[] fileContent = (byte[]) this.in.readObject();
