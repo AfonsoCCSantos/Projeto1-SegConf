@@ -14,9 +14,13 @@ import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.AlgorithmParameters;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.cert.CertificateFactory;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -196,5 +200,20 @@ public class CatalogoDeUtilizadores extends Catalogo {
 
 	public void setSecretKey(SecretKey secretKey) {
 		this.secretKey = secretKey;
+	}
+	
+	public PublicKey getUserPublicKey(String user) {
+		String userCetificateFileName =this.registeredUsers.get(user);
+		FileInputStream fis;
+		Certificate userCertificate = null;
+		try {
+			fis = new FileInputStream("serverFiles/" + userCetificateFileName);
+			CertificateFactory cf = CertificateFactory.getInstance("X.509");
+			userCertificate = (Certificate) cf.generateCertificate(fis);
+		} catch (FileNotFoundException | CertificateException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return userCertificate.getPublicKey();
 	}
 }

@@ -1,6 +1,7 @@
 package logs;
 
 import java.io.Serializable;
+import java.security.SignedObject;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -14,16 +15,16 @@ public class Bloco implements Serializable {
 	
 	private long numOfTransactions;
 	
-	private List<String> transactions;
+	private List<SignedObject> transactions;
 	
 	public Bloco(byte[] hash, long blockId, long numOfTransactions) {
 		this.hash = hash;
 		this.blockId = blockId;
 		this.numOfTransactions = numOfTransactions;
-		this.transactions = new ArrayList<String>();
+		this.transactions = new ArrayList<SignedObject>();
 	}
 	
-	public Bloco(byte[] hash, long blockId, long numOfTransactions, List<String> transactions) {
+	public Bloco(byte[] hash, long blockId, long numOfTransactions, List<SignedObject> transactions) {
 		this.hash = hash;
 		this.blockId = blockId;
 		this.numOfTransactions = numOfTransactions;
@@ -54,11 +55,11 @@ public class Bloco implements Serializable {
 		this.numOfTransactions = numOfTransactions;
 	}
 
-	public List<String> getTransactions() {
+	public List<SignedObject> getTransactions() {
 		return transactions;
 	}
 
-	public void setTransactions(List<String> transactions) {
+	public void setTransactions(List<SignedObject> transactions) {
 		this.transactions = transactions;
 	}
 	

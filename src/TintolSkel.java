@@ -9,27 +9,16 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
-import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.SignedObject;
-import java.util.Base64;
 import java.util.Random;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
 
 import Catalogos.CatalogoDeMensagens;
 import Catalogos.CatalogoDeSaldos;
@@ -150,9 +139,6 @@ public class TintolSkel {
 				boolean isTheSameNonce = receivedNonce.equals(nonce);
 				boolean isTheNonceSigned = s.verify(receivedSignedNonce);
 
-				System.out.println(isTheSameNonce);
-				System.out.println(isTheNonceSigned);
-
 				if (isTheSameNonce && isTheNonceSigned) {
 					String certificateFileName =user + ".cer";
 					byte[] buf = receivedCertificate.getEncoded();
@@ -195,7 +181,7 @@ public class TintolSkel {
 			}
 			return;
 		}
-		
+
 		try {
 			this.out.writeObject(true);
 			byte[] fileContent = (byte[]) this.in.readObject();
@@ -263,7 +249,8 @@ public class TintolSkel {
 		}
 
 		synchronized (this.blockchain) {
-			this.blockchain.writeTransaction(sell);
+			//			this.blockchain.writeTransaction(sell);
+			this.blockchain.writeTransaction(sellTransactionSigned);
 		}
 
 		try {
@@ -342,6 +329,19 @@ public class TintolSkel {
 			}
 		}
 
+		//2. Verificar se o user vendedor existe
+		if (!this.catUsers.userExists(seller)) {
+			try {
+				out.writeObject("-1");
+				out.writeObject("This seller does not exist.");
+				return;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+
+
 		double winePrice = 0;
 
 		synchronized(this.catVendas){
@@ -354,7 +354,7 @@ public class TintolSkel {
 					e.printStackTrace();
 				}
 			}
-			//2.Obter o valor que o user ira pagar ao comprar estas unidades do dado vinho
+			//3.Obter o valor que o user ira pagar ao comprar estas unidades do dado vinho
 			winePrice = this.catVendas.getWinePrice(wine,seller) * Integer.parseInt(quantity);
 		}
 
@@ -371,7 +371,7 @@ public class TintolSkel {
 			e.printStackTrace();
 		}
 
-		//3.Verificar se ha quantidades suficientes do vinho
+		//4.Verificar se ha quantidades suficientes do vinho
 		synchronized (this.catWines) {
 			if (!this.catWines.hasEnoughQuantity(wine, Integer.parseInt(quantity))) {
 				try {
@@ -382,7 +382,7 @@ public class TintolSkel {
 				}
 			}
 		}
-		//4. Verificar se user tem dinheiro suficiente
+		//5. Verificar se user tem dinheiro suficiente
 		synchronized(this.catSaldos) {
 			if (this.catSaldos.userHasMoney(user,winePrice)) {
 				//4.1. Tirar da conta do user que compra - Se nao tiver dinheiro suficiente, avisar
@@ -400,15 +400,7 @@ public class TintolSkel {
 			}
 		}
 
-		BuyTransaction buy = null;
-		if (verifyTransactionsSignature(signedTransaction))  {
-			try {
-				buy = (BuyTransaction) signedTransaction.getObject();
-			} catch (ClassNotFoundException | IOException e) {
-				e.printStackTrace();
-			}
-		}
-		else {
+		if (!verifyTransactionsSignature(signedTransaction))  {
 			try {
 				out.writeObject("Signature not verified.");
 			} catch (IOException e) {
@@ -418,18 +410,18 @@ public class TintolSkel {
 		}
 
 
-		//5. tirar a sell ou a quantidade de vinho comparada da sell
+		//6. tirar a sell ou a quantidade de vinho comparada da sell
 		synchronized(this.catVendas){
 			this.catVendas.removeQuantityFromSell(wine,seller,quantity);
 		}
 
-		//6. tirar a quantidade de vinho
+		//7. tirar a quantidade de vinho
 		synchronized (this.catWines) {
 			this.catWines.updateQuantity(wine, -Integer.parseInt(quantity));
 		}
 
 		synchronized (this.blockchain) {
-			this.blockchain.writeTransaction(buy);
+			this.blockchain.writeTransaction(signedTransaction);
 		}
 
 		try {
@@ -530,7 +522,10 @@ public class TintolSkel {
 
 	public void list() {
 		try {
-			this.out.writeObject(this.blockchain.listTransactions());
+			String listaTransacoes = this.blockchain.listTransactions();
+			if (listaTransacoes.length() == 0)
+				listaTransacoes = "No transactions.";
+			this.out.writeObject(listaTransacoes);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

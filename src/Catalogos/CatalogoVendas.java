@@ -51,6 +51,7 @@ public class CatalogoVendas extends Catalogo {
 	 */
 	public boolean userSellsWine(String user, String wineName) {
 		List<WineSell> wineSells = sellsMap.get(wineName);
+		if (wineSells == null) return false;
 		for (WineSell sell : wineSells) {
 			if (sell.getSeller().equals(user)) {
 				return true;
@@ -58,6 +59,7 @@ public class CatalogoVendas extends Catalogo {
 		}
 		return false;
 	}
+	
 
 	public void sellWine(String wine, String user, String value, String quantity) {
 		hmac.confirmHmac();

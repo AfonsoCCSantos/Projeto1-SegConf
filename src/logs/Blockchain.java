@@ -1,6 +1,5 @@
 package logs;
 
-import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.File;
 import java.io.ObjectOutputStream;
@@ -17,6 +16,9 @@ import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import Catalogos.CatalogoDeUtilizadores;
+
 import java.io.ByteArrayOutputStream;
 import java.security.SignedObject;
 import java.util.ArrayList;
@@ -29,13 +31,15 @@ public class Blockchain {
 	private long currentBlockId = 0;
 	private PrivateKey privateKey;
 	private PublicKey publicKey;
-	private List<String> transactions;
+	private List<SignedObject> transactions;
+	private CatalogoDeUtilizadores catUsers;
 
 	private Blockchain() {
 		//Find latest block
 		currentBlock = null;
 		File blockchainFolder = new File(SERVER_FILES_BLOCKCHAIN);
 		String[] blockchainFileNames = blockchainFolder.list();
+		this.catUsers = CatalogoDeUtilizadores.getInstance();
 				
 		if(blockchainFileNames.length == 0) {
 			currentBlock = new File(SERVER_FILES_BLOCKCHAIN + "/block_1.blk");
@@ -54,7 +58,7 @@ public class Blockchain {
 	}
 	
 	
-	public void writeTransaction(Transaction transaction) {
+	public void writeTransaction(SignedObject transaction) {
 		Bloco toUpdate = null;
 		try {
 			FileInputStream fis = new FileInputStream(currentBlock);
@@ -67,7 +71,7 @@ public class Blockchain {
 		try {
 			FileOutputStream fos = new FileOutputStream(currentBlock);
 			ObjectOutputStream oos = new ObjectOutputStream(fos);
-			toUpdate.getTransactions().add(transaction.toString());
+			toUpdate.getTransactions().add(transaction);
 			oos.writeObject(toUpdate);
 			oos.close();
 		} catch (IOException e) {
@@ -79,7 +83,7 @@ public class Blockchain {
 		if(currentNumTransactions == 5) {
 			createNewBlock();
 		}
-		this.transactions.add(transaction.toString());
+		this.transactions.add(transaction);
 	}
 	
 	//@requires verifiyIntegrityOfBlockchain
@@ -108,7 +112,8 @@ public class Blockchain {
 					SignedObject toCheckSignature = (SignedObject) ois.readObject();
 					block = (Bloco) toCheckSignature.getObject();	
 				}
-				for (String transaction : block.getTransactions()) {
+				
+				for (SignedObject transaction : block.getTransactions()) {
 					this.transactions.add(transaction);
 				}
 			}
@@ -213,15 +218,17 @@ public class Blockchain {
 					Bloco block = (Bloco) ois.readObject();
 					ois.close();
 					fis.close();
-					return MessageDigest.isEqual(previousBlockHash, block.getHash());
+					return verifyTransactions(block) && MessageDigest.isEqual(previousBlockHash, block.getHash());
 				}
+				
 				SignedObject toCheckSignature = (SignedObject) ois.readObject();
 				ois.close();
 				Signature s = Signature.getInstance("MD5withRSA");
 				Bloco savedObject = (Bloco) toCheckSignature.getObject();
 				
 				if (!toCheckSignature.verify(this.publicKey, s) || 
-						!MessageDigest.isEqual(previousBlockHash, savedObject.getHash())) {
+						!MessageDigest.isEqual(previousBlockHash, savedObject.getHash()) ||
+						!verifyTransactions(savedObject)) {
 					return false;
 				}
 				
@@ -242,13 +249,29 @@ public class Blockchain {
 		return true;
 	}
 	
+	public boolean verifyTransactions(Bloco bloco) {
+		List<SignedObject> transactions = bloco.getTransactions();
+		for (SignedObject transaction : transactions) {
+			if (!verifyTransactionsSignature(transaction)) return false;
+		}
+		return true;
+	}
+	
 	public String listTransactions() {
 		StringBuilder sb = new StringBuilder();
-		for (String transaction : this.transactions) {
-			sb.append(transaction + "\n");
+		for (SignedObject transactionSigned : this.transactions) {
+			Transaction transaction = null;
+			try {
+				transaction = (Transaction) transactionSigned.getObject();
+			} catch (ClassNotFoundException | IOException e) {
+				e.printStackTrace();
+			}
+			sb.append(transaction.toString() + "\n");
 		}
 		return sb.toString();
 	}
+	
+	
 
 	public void setPrivateKey(PrivateKey privateKey) {
 		this.privateKey = privateKey;
@@ -258,6 +281,19 @@ public class Blockchain {
 		this.publicKey = publicKey;
 	}
 	
+	private boolean verifyTransactionsSignature(SignedObject transactionSigned) {
+		Signature signature;
+		boolean res = false;
+		try {
+			Transaction transaction = (Transaction) transactionSigned.getObject();
+			PublicKey userPublicKey = catUsers.getUserPublicKey(transaction.getUser());
+			signature =  Signature.getInstance("MD5withRSA");
+			res = transactionSigned.verify(userPublicKey, signature);
+		} catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException | ClassNotFoundException | IOException e) {
+			e.printStackTrace();
+		}	
+		return res;
+	} 
 	
 	
 }
