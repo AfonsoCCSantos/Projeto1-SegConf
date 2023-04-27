@@ -359,11 +359,6 @@ public class TintolStub {
 			return;
 		}
 
-		if(!ValidationLib.verifyString(tokens[1])) {
-			System.out.println("The name of the user is not valid.");
-			return;
-		}
-
 		//Primeiro, obter a mensagem que se pretende enviar
 		StringBuilder sb = new StringBuilder();
 		for(int i = 2; i < tokens.length; i++) { //message starts in tokens[2]
