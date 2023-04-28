@@ -23,6 +23,13 @@ import java.io.ByteArrayOutputStream;
 import java.security.SignedObject;
 import java.util.ArrayList;
 
+/**
+*
+* @author Afonso Santos - FC56368
+* @author Alexandre Figueiredo - FC57099
+* @author Raquel Domingos - FC56378
+*
+*/
 public class Blockchain {
 	private static final String SERVER_FILES_BLOCKCHAIN = "serverFiles/blockchain";
 	private static Blockchain INSTANCE = null;

@@ -1,18 +1,12 @@
 package Catalogos;
 
 import javax.crypto.*;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.FileInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.AlgorithmParameters;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -22,9 +16,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.cert.CertificateFactory;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 
 /**
@@ -210,7 +202,6 @@ public class CatalogoDeUtilizadores extends Catalogo {
 			CertificateFactory cf = CertificateFactory.getInstance("X.509");
 			userCertificate = (Certificate) cf.generateCertificate(fis);
 		} catch (FileNotFoundException | CertificateException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return userCertificate.getPublicKey();

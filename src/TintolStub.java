@@ -6,10 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -32,8 +29,6 @@ import javax.crypto.NoSuchPaddingException;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-
-import Catalogos.CatalogoDeVinhos;
 
 
 /**
@@ -297,7 +292,6 @@ public class TintolStub {
 			Signature signature = Signature.getInstance("MD5withRSA");
 
 			this.out.writeObject("buy");
-			//buy vinho seller qtd
 			this.out.writeObject(tokens[1]); //send wine name
 			this.out.writeObject(tokens[2]); //send seller name
 			this.out.writeObject(tokens[3]); //send quantity

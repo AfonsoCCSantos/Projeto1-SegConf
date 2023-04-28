@@ -5,6 +5,13 @@ import java.security.SignedObject;
 import java.util.List;
 import java.util.ArrayList;
 
+/**
+*
+* @author Afonso Santos - FC56368
+* @author Alexandre Figueiredo - FC57099
+* @author Raquel Domingos - FC56378
+*
+*/
 public class Bloco implements Serializable {
 
 	private static final long serialVersionUID = 1L;

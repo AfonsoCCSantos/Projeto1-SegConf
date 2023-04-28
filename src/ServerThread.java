@@ -1,10 +1,6 @@
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.net.Socket;
-import java.security.Key;
 import java.security.SignedObject;
-
-import javax.crypto.SecretKey;
 
 
 /**
@@ -17,15 +13,10 @@ import javax.crypto.SecretKey;
 public class ServerThread extends Thread {
 
     private Socket socket = null;
-	private SecretKey passwordKey = null;
-	private Key privateKey;
 
 
-    public ServerThread(Socket inSocket, SecretKey passwordKey, Key privateKey) {
+    public ServerThread(Socket inSocket) {
         socket = inSocket;
-		this.passwordKey = passwordKey;
-		this.privateKey = privateKey;
-		
     }
 
     public void run() {

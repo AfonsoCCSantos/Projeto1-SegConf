@@ -255,7 +255,6 @@ public class TintolSkel {
 		}
 
 		synchronized (this.blockchain) {
-			//			this.blockchain.writeTransaction(sell);
 			this.blockchain.writeTransaction(sellTransactionSigned);
 		}
 
@@ -472,9 +471,20 @@ public class TintolSkel {
 		} catch (ClassNotFoundException | IOException e) {
 			e.printStackTrace();
 		}
+		
+		if (!this.catUsers.userExists(toUser)) {
+			try {
+				out.writeObject("Receiver does not exist.");
+				return;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
 		synchronized (this.catMessages) {
 			this.catMessages.registerMessage(toUser, fromUser, message);
 		}
+		
 		try {
 			out.writeObject("Message sent successfully.");
 			return;

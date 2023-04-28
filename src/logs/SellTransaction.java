@@ -1,5 +1,12 @@
 package logs;
 
+/**
+*
+* @author Afonso Santos - FC56368
+* @author Alexandre Figueiredo - FC57099
+* @author Raquel Domingos - FC56378
+*
+*/
 public class SellTransaction extends Transaction {
 
 

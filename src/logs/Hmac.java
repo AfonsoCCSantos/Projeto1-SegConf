@@ -13,6 +13,13 @@ import java.security.Key;
 
 import javax.crypto.Mac;
 
+/**
+*
+* @author Afonso Santos - FC56368
+* @author Alexandre Figueiredo - FC57099
+* @author Raquel Domingos - FC56378
+*
+*/
 public class Hmac {
 	
 	private static Hmac INSTANCE = new Hmac();

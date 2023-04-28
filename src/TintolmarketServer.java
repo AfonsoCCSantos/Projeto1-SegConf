@@ -152,7 +152,7 @@ public class TintolmarketServer {
 		while (true) {
 			try {
 				Socket inSocket = serverSocket.accept();
-				ServerThread newServerThread = new ServerThread(inSocket, passwordKey,privateKey);
+				ServerThread newServerThread = new ServerThread(inSocket);
 				newServerThread.start();
 			}
 			catch (IOException e) {

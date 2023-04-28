@@ -1,6 +1,6 @@
-Para compilar o jar do servidor: jar cvfm TintolmarketServer.jar manifestTintolmarketServer.txt TintolmarketServer.class ServerThread.class TintolSkel.class Catalogos/Catalogo.class Catalogos/CatalogoDeMensagens.class Catalogos/CatalogoDeSaldos.class Catalogos/CatalogoDeUtilizadores.class Catalogos/CatalogoDeVinhos.class Catalogos/CatalogoVendas.class Models/Message.class Utils.class ValidationLib.class Models/Wine.class Models/WineSell.class logs/Blockchain.class logs/Bloco.class logs/BuyTransaction.class logs/Hmac.class logs/SellTransaction.class logs/Transaction.class
+Para compilar o jar do servidor: jar cvfm TintolmarketServer.jar manifestTintolmarketServer.txt bin/TintolmarketServer.class bin/ServerThread.class bin/TintolSkel.class bin/Catalogos/Catalogo.class bin/Catalogos/CatalogoDeMensagens.class bin/Catalogos/CatalogoDeSaldos.class bin/Catalogos/CatalogoDeUtilizadores.class bin/Catalogos/CatalogoDeVinhos.class bin/Catalogos/CatalogoVendas.class bin/Models/Message.class bin/Utils.class bin/ValidationLib.class bin/Models/Wine.class bin/Models/WineSell.class bin/logs/Blockchain.class bin/logs/Bloco.class bin/logs/BuyTransaction.class bin/logs/Hmac.class bin/logs/SellTransaction.class bin/logs/Transaction.class
 
-Para compilar o jar do cliente: jar cvfm Tintolmarket.jar manifestTintolmarket.txt Tintolmarket.class TintolStub.class Utils.class ValidationLib.class logs/BuyTransaction.class logs/SellTransaction.class logs/Transaction.class
+Para compilar o jar do cliente: jar cvfm Tintolmarket.jar manifestTintolmarket.txt bin/Tintolmarket.class bin/TintolStub.class bin/Utils.class bin/ValidationLib.class bin/logs/BuyTransaction.class bin/logs/SellTransaction.class bin/logs/Transaction.class
 
 Foram tambem enviados os ficheiros manifestTintolmarketServer.txt e manifestTintolmarket.txt
 
@@ -41,12 +41,28 @@ Os ficheiros no servidor sao guardados da seguinte forma:
       e o seu saldo atual. O formato das linhas sao:
       	utilizador:dinheiroDisponivel
      -Em "params.txt" sao guardados os parametros utilizados para cifrar e decifrar o ficheiro "users.cif"
-     -Em "macs.txt" eh guardado o Hmac do conteudo dos ficheiros "messages.txt", "sells.txt", "wines.txt", "budgets.txt" 	
+     -Em "macs.txt" eh guardado o Hmac do conteudo dos ficheiros "messages.txt", "sells.txt", "wines.txt", "budgets.txt"
+     - A keystore.server e o certificado do servidor tambem esta incluida na pasta /serverFiles
+     - Quando eh registado um novo cliente, eh guardado o seu certificado tambem na pasta serverFiles/ 
 
 As imagens enviadas para o cliente aquando da operacao "view" sao guardadas da seguinte forma:
-	-Quando a imagem eh recebida, a mesma eh guardada com o nome: nomeDoVinho_nomeDoUser.extensao
+	-Quando a imagem eh recebida, a mesma eh guardada com o nome: nomeDoVinho_nomeDoUser.extensao e colocada na pasta /userFiles.
 
 
 So sao aceites imagens com extensoes png, jpg ou jpeg.
 
 Os nomes dos vinhos nao podem conter qualquer um dos seguintes caracteres: "(){}[]|`! \"$%^&*<>:;#~_-+=,@."
+
+Na pasta /userFiles estao:
+	- keystore.client1 e keystore.client2 (keystores dos clientes)
+	- truststore.client (truststore com os certificados de todos os clientes e do servidor)
+	- as imagens que os clientes recebem ao executar comando "view"
+
+Antes de ser adicionado um novo cliente, na pasta /userFiles, deve ser:
+	- adicionada um nova keystore para o mesmo: keytool -genkeypair -alias <userId> -keyalg RSA -keysize 2048 -keystore keystore.userId
+	- exportar o certificado criado: keytool -exportcert -alias <userId> -file certUserId.cer -keystore keystore.userId
+	- importar o certificado criado para a truststore: keytool -importcert -alias <userId> -file certUserId.cer -keystore truststore.client
+	
+Para ver os conteudos de uma keystore: keytool -list -keystore <keystore>
+Para ver o conteudo de um certificado: keytool -printcert -file <certificado>	
+	 	
